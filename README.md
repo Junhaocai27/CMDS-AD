@@ -2,8 +2,8 @@
 
 **[ECCV 2026]** Official implementation.
 
-## Project Page
-https://cmds-ad.github.io/
+[![arXiv](https://img.shields.io/badge/arXiv-2606.20300-b31b1b.svg)](https://arxiv.org/abs/2606.20300)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://cmds-ad.github.io/)
 
 ## 🚨 Code Coming Soon
 
