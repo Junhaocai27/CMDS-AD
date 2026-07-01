@@ -7,7 +7,7 @@
 
 ## 🚨 Code Coming Soon
 
-The source code, including training and evaluation scripts, is currently being cleaned up and **will be released in a few days**. Please stay tuned!
+The source code, including training and evaluation scripts, is currently being cleaned up and will be released after the paper is officially published. Please stay tuned!
 
 ## Abstract
 
