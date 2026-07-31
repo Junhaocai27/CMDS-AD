@@ -1,8 +1,8 @@
 # CMDS-AD: Cross-Modal Dual-Stream Decoupling for Few-Shot Anomaly Detection
 
-[![arXiv](https://img.shields.io/badge/arXiv-2606.20300-b31b1b.svg)](https://arxiv.org/abs/2606.20300)
-[![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://cmds-ad.github.io/)
-[![ECCV 2026](https://img.shields.io/badge/ECCV-2026-4b2e83.svg)](https://eccv.ecva.net/)
+[📄 Paper](https://arxiv.org/abs/2606.20300) ·
+[🌐 Project Page](https://cmds-ad.github.io/) ·
+[💾 Model Weights](https://drive.google.com/file/d/1CNmmkdtiumA47AJ1PoZ4klwAyvFbvvYq/view?usp=sharing)
 
 Official code release for CMDS-AD, a cross-modal few-shot anomaly detection
 framework for 3D industrial inspection. The release covers the complete
@@ -27,15 +27,10 @@ checkpoints are intentionally not stored in Git.
 - **2026-06-20:** We uploaded the arXiv version and released the project page.
 - **2026-07-31:** We released the complete source code and trained weights.
 
-arXiv: [paper](https://arxiv.org/abs/2606.20300)
-Project page: [website](https://cmds-ad.github.io/).
-
 ## 📦 Pretrained weights
 
-The Google Drive archive contains the trained CMDS-AD checkpoints and the
-category-specific LoRA weights produced for this project:
-
-[Download archive](https://drive.google.com/file/d/1CNmmkdtiumA47AJ1PoZ4klwAyvFbvvYq/view?usp=sharing)
+The Google Drive archive linked above contains the trained CMDS-AD checkpoints
+and the category-specific LoRA weights produced for this project.
 
 After downloading, extract the archive so that the release contains the
 following logical directories:
@@ -66,23 +61,29 @@ The following resources are intentionally downloaded from their upstream
 sources rather than bundled in the Google Drive archive. The commands and
 paths below match the release scripts.
 
-### 📊 Datasets
+### 📊 Datasets and model sources
 
-- **MVTec 3D-AD:** [official dataset page](https://www.mvtec.com/research-teaching/datasets/mvtec-3d-ad).
-  Download the complete dataset, including the test-set anomaly annotations,
-  and place a working copy under `data/raw/mvtec_3d`.
-- **Eyecandies:** [official project page](https://eyecan-ai.github.io/eyecandies/)
-  and [official dataset/download repository](https://github.com/eyecan-ai/eyecandies).
-  The upstream downloader can be used as follows:
+| Resource | Official source | Used for |
+|---|---|---|
+| MVTec 3D-AD | [Dataset page](https://www.mvtec.com/research-teaching/datasets/mvtec-3d-ad) | RGB, XYZ, anomaly GT |
+| Eyecandies | [Project page](https://eyecan-ai.github.io/eyecandies/) · [Downloader](https://github.com/eyecan-ai/eyecandies) | RGB, depth, masks |
+| Stable Diffusion 2.1 | [Model card](https://huggingface.co/stabilityai/stable-diffusion-2-1-base) | LoRA and i2i RGB generation |
+| Marigold | [Normals model](https://huggingface.co/prs-eth/marigold-normals-v1-1) | Estimated normal generation |
+| DINO ViT-B/8 | [Model card](https://huggingface.co/timm/vit_base_patch8_224.dino) | RGB feature extraction |
 
-  ```bash
-  git clone https://github.com/eyecan-ai/eyecandies.git /path/to/eyecandies
-  python -m pip install -e "/path/to/eyecandies[torch]"
-  eyec ec-get +o "$PWD/data/raw/Eyecandies"
-  ```
+Download the complete MVTec dataset, including the test-set anomaly
+annotations, and place a working copy under `data/raw/mvtec_3d`.
 
-  After downloading, run `processing/preprocess_eyecandies.py` as described in
-  [Dataset preparation](#-dataset-preparation).
+The official Eyecandies downloader can be used as follows:
+
+```bash
+git clone https://github.com/eyecan-ai/eyecandies.git /path/to/eyecandies
+python -m pip install -e "/path/to/eyecandies[torch]"
+eyec ec-get +o "$PWD/data/raw/Eyecandies"
+```
+
+After downloading, run `processing/preprocess_eyecandies.py` as described in
+[Dataset preparation](#-dataset-preparation).
 
 ### 🧩 Foundation models
 
@@ -92,34 +93,30 @@ Install the Hugging Face command-line client if it is not already available:
 python -m pip install -U "huggingface_hub[cli]"
 ```
 
-- **Stable Diffusion 2.1 base:** [model card and download page](https://huggingface.co/stabilityai/stable-diffusion-2-1-base).
-  Accept the model license on Hugging Face and authenticate with `hf auth login`
-  when requested. Then download it to the path used by the i2i and
-  LoRA scripts:
+Accept the Stable Diffusion license on Hugging Face and authenticate with
+`hf auth login` when requested. Then download it to the path used by the i2i
+and LoRA scripts:
 
-  ```bash
-  hf download stabilityai/stable-diffusion-2-1-base \
-    --local-dir weights/stable-diffusion-2-1-base
-  ```
+```bash
+hf download stabilityai/stable-diffusion-2-1-base \
+  --local-dir weights/stable-diffusion-2-1-base
+```
 
-- **Marigold surface-normal estimator:** [Marigold normals model](https://huggingface.co/prs-eth/marigold-normals-v1-1)
-  and [upstream Marigold repository](https://github.com/prs-eth/Marigold).
-  Download the checkpoint expected by `third_party/marigold/run_normals.py`:
+Download the Marigold checkpoint expected by
+`third_party/marigold/run_normals.py`:
 
-  ```bash
-  hf download prs-eth/marigold-normals-v1-1 \
-    --local-dir weights/marigold
-  ```
+```bash
+hf download prs-eth/marigold-normals-v1-1 \
+  --local-dir weights/marigold
+```
 
-- **DINO ViT-B/8 image backbone:** [Hugging Face model card](https://huggingface.co/timm/vit_base_patch8_224.dino)
-  and [timm upstream repository](https://github.com/huggingface/pytorch-image-models).
-  The code requests the model as `vit_base_patch8_224.dino`. Either let the
-  first feature-extraction run download it automatically, or pre-populate the
-  default Hugging Face cache with:
+The code requests the DINO model as `vit_base_patch8_224.dino`. Either let the
+first feature-extraction run download it automatically, or pre-populate the
+default Hugging Face cache with:
 
-  ```bash
-  hf download timm/vit_base_patch8_224.dino
-  ```
+```bash
+hf download timm/vit_base_patch8_224.dino
+```
 
 The DINO cache is normally stored under
 `~/.cache/huggingface/hub/models--timm--vit_base_patch8_224.dino`. If a
@@ -175,11 +172,10 @@ CMDS-AD/
 
 ## 🧪 Dataset preparation
 
-Download [MVTec 3D-AD](https://www.mvtec.com/research-teaching/datasets/mvtec-3d-ad)
-and [Eyecandies](https://eyecan-ai.github.io/eyecandies/) from their official
-sources. Do not run the MVTec preprocessing script directly on the only copy
-of the raw data: it updates XYZ TIFF files in place. Keep the downloaded data
-under `data/raw/` and preprocess a working copy.
+Download MVTec 3D-AD and Eyecandies from the official sources listed above.
+Do not run the MVTec preprocessing script directly on the only copy of the raw
+data: it updates XYZ TIFF files in place. Keep the downloaded data under
+`data/raw/` and preprocess a working copy.
 
 ### 🔷 MVTec 3D-AD
 
@@ -669,22 +665,28 @@ version released with the project page.
 This release builds on or interfaces with the following projects and model
 families:
 
-- **CFM — Crossmodal Feature Mapping:** [repository](https://github.com/CVLAB-Unibo/crossmodal-feature-mapping),
-  [project page](https://cvlab-unibo.github.io/CrossmodalFeatureMapping/), and
-  [paper](https://arxiv.org/abs/2312.04521).
-- **Marigold:** [repository](https://github.com/prs-eth/Marigold),
-  [surface-normal model](https://huggingface.co/prs-eth/marigold-normals-v1-1),
-  and [project page](https://marigoldmonodepth.github.io/).
-- **DINO/timm:** [timm repository](https://github.com/huggingface/pytorch-image-models)
-  and [DINO model](https://huggingface.co/timm/vit_base_patch8_224.dino).
-- **Stable Diffusion 2.1:** [model card](https://huggingface.co/stabilityai/stable-diffusion-2-1-base)
-  and [Stable Diffusion repository](https://github.com/Stability-AI/stablediffusion).
-- **LoRA Diffusion:** [upstream repository](https://github.com/cloneofsimo/lora).
-- **Open3D:** [repository](https://github.com/isl-org/Open3D).
-- **PointNet2:** [PyTorch operators repository](https://github.com/erikwijmans/Pointnet2_PyTorch).
-- **Point-MAE:** [repository](https://github.com/Pang-Yunsheng/Point-MAE).
-- **Eyecandies:** [dataset repository](https://github.com/eyecan-ai/eyecandies)
-  and [project page](https://eyecan-ai.github.io/eyecandies/).
+- [CFM — Crossmodal Feature Mapping](https://github.com/CVLAB-Unibo/crossmodal-feature-mapping)
+- [Marigold](https://github.com/prs-eth/Marigold)
+- [DINO/timm](https://github.com/huggingface/pytorch-image-models)
+- [Stable Diffusion](https://github.com/Stability-AI/stablediffusion)
+- [LoRA Diffusion](https://github.com/cloneofsimo/lora)
+- [Open3D](https://github.com/isl-org/Open3D)
+- [PointNet2](https://github.com/erikwijmans/Pointnet2_PyTorch)
+- [Point-MAE](https://github.com/Pang-Yunsheng/Point-MAE)
+- [Eyecandies](https://github.com/eyecan-ai/eyecandies)
+
+<details>
+<summary>🔗 Full upstream references</summary>
+
+- [CFM project page](https://cvlab-unibo.github.io/CrossmodalFeatureMapping/) ·
+  [paper](https://arxiv.org/abs/2312.04521)
+- [Marigold normals model](https://huggingface.co/prs-eth/marigold-normals-v1-1) ·
+  [project page](https://marigoldmonodepth.github.io/)
+- [DINO model](https://huggingface.co/timm/vit_base_patch8_224.dino)
+- [Stable Diffusion 2.1 model card](https://huggingface.co/stabilityai/stable-diffusion-2-1-base)
+- [Eyecandies project page](https://eyecan-ai.github.io/eyecandies/)
+
+</details>
 
 Their source files and license notices are retained where applicable. Please
 review all upstream licenses, model cards, and dataset terms before
