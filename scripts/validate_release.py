@@ -18,6 +18,7 @@ REQUIRED = [
     "test_anomaly_fusion_eyecandies.py",
     "scripts/train.py",
     "scripts/prepare_rgb.py",
+    "scripts/validate_dataset.py",
 ]
 FORBIDDEN = [
     "f1d6a732d2453eceb40329334f6e83e503e88428",

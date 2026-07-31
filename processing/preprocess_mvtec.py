@@ -113,6 +113,8 @@ def preprocess_pc(tiff_path):
     gt_path = str(tiff_path).replace("xyz", "gt").replace("tiff", "png")
     organized_rgb = np.array(Image.open(rgb_path))
 
+    # MVTec ground-truth masks are evaluation annotations. They are deliberately
+    # preserved in test/<defect>/gt and are never rewritten by XYZ preprocessing.
     organized_gt = None
     gt_exists = os.path.isfile(gt_path)
     if gt_exists:
