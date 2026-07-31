@@ -23,7 +23,7 @@ GEN_RGB_ROOT = os.getenv("CMDS_AD_MVTEC_RGB_ROOT", str(RELEASE_ROOT / "data/deri
 TRAIN_OUTPUT_ROOT = os.getenv("CMDS_AD_MVTEC_NORMAL_ROOT", str(RELEASE_ROOT / "data/derived/normal_output_train_new_full"))
 
 # 2. 脚本路径
-SCRIPT_REAL_PATH = str(RELEASE_ROOT / "processing/pc2sn_o3d_gpu.py")
+SCRIPT_REAL_PATH = str(RELEASE_ROOT / "processing/pc2sn_o3d_gpu_mvtec3dad.py")
 SCRIPT_EST_PATH = str(RELEASE_ROOT / "third_party/marigold/run_normals.py")
 
 # 3. 运行参数

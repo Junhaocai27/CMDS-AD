@@ -40,7 +40,7 @@ def get_gpu_converter(radius, max_nn):
     if not o3c.cuda.is_available():
         raise RuntimeError("CUDA is required for real-normal generation, but Open3D CUDA is unavailable")
 
-    from processing.pc2sn_o3d_gpu import convert_mvtec_tiff_to_normal_o3d_gpu
+    from processing.pc2sn_o3d_gpu_mvtec3dad import convert_mvtec_tiff_to_normal_o3d_gpu
 
     device = o3c.Device("CUDA:0")
 

@@ -50,8 +50,8 @@ def dataset_defaults(dataset, root):
             "est_normal_root": root / "data/derived/normal_output_train_new_full/estimated_normals",
             "mask_root": root / "data/derived/mvtec_3d_masks_generated",
             "trainers": {
-                "2dto3d": root / "train_2d_to_3d.py",
-                "3dto2d": root / "train_3d_to_2d.py",
+                "2dto3d": root / "train_2d_to_3d_mvtec3dad.py",
+                "3dto2d": root / "train_3d_to_2d_mvtec3dad.py",
             },
         }
     return {

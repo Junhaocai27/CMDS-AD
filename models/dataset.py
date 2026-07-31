@@ -3,7 +3,7 @@ from PIL import Image
 from torchvision import transforms
 import glob
 from torch.utils.data import Dataset
-from utils.mvtec3d_utils import *
+from utils.mvtec3dad_utils import *
 from torch.utils.data import DataLoader
 import numpy as np
 from utils.general_utils import SquarePad

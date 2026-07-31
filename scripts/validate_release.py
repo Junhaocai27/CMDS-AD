@@ -7,14 +7,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = [
-    "processing/preprocess_mvtec.py",
+    "processing/preprocess_mvtec3dad.py",
     "processing/preprocess_eyecandies.py",
     "processing/pc2sn_o3d_cpu.py",
-    "train_2d_to_3d.py",
-    "train_3d_to_2d.py",
+    "train_2d_to_3d_mvtec3dad.py",
+    "train_3d_to_2d_mvtec3dad.py",
     "train_2d_to_3d_eyecandies.py",
     "train_3d_to_2d_eyecandies.py",
-    "test_anomaly_fusion.py",
+    "test_anomaly_fusion_mvtec3dad.py",
     "test_anomaly_fusion_eyecandies.py",
     "scripts/train.py",
     "scripts/prepare_rgb.py",

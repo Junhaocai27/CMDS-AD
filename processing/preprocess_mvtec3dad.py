@@ -15,7 +15,7 @@ import open3d as o3d
 from pathlib import Path
 from PIL import Image
 import math
-import utils.mvtec3d_utils as mvt_util
+import utils.mvtec3dad_utils as mvt_util
 import argparse
 
 

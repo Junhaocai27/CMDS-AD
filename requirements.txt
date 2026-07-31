@@ -26,5 +26,5 @@ accelerate>=0.20.0
 safetensors>=0.3.0
 einops>=0.6.0
 
-# pointnet2_ops is used by mask_vis.py and the legacy multimodal feature code.
+# pointnet2_ops is used by mask_vis_mvtec3dad.py and the legacy multimodal feature code.
 # Install the compatible implementation separately for your PyTorch/CUDA build.
