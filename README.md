@@ -484,11 +484,9 @@ The training dataset deliberately combines the two RGB streams:
 
 The launcher maps shots to the released training schedule:
 
-| shots | default training steps |
-|---:|---:|
-| 1 | 3000 |
-| 2 | 1500 |
-| 4 | 750 |
+| **shots** | **1** | **2** | **4** |
+|---|---:|---:|---:|
+| **default training steps** | 3000 | 1500 | 750 |
 
 ### 🖥️ Original high-memory configuration
 
