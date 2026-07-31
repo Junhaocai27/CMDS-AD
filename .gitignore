@@ -20,3 +20,4 @@ wandb/
 *.tar
 *.tar.*
 *.zip
+*.egg-info/

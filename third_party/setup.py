@@ -1,7 +1,12 @@
 import os
 
-import pkg_resources
 from setuptools import find_packages, setup
+
+
+REQUIREMENTS_FILE = os.path.join(
+    os.path.dirname(__file__), "lora_requirements.txt"
+)
+
 
 setup(
     name="lora_diffusion",
@@ -19,10 +24,9 @@ setup(
         ],
     },
     install_requires=[
-        str(r)
-        for r in pkg_resources.parse_requirements(
-            open(os.path.join(os.path.dirname(__file__), "requirements.txt"))
-        )
+        line.strip()
+        for line in open(REQUIREMENTS_FILE)
+        if line.strip() and not line.lstrip().startswith("#")
     ],
     include_package_data=True,
 )

@@ -67,17 +67,21 @@ git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git
 python -m pip install -e Pointnet2_PyTorch/pointnet2_ops_lib
 ```
 
-LoRA training calls the `lora_pti` executable. Install its dependencies and
-verify that the executable is available before starting LoRA training:
+The LoRA stage follows the upstream [LoRA PTI interface](https://github.com/cloneofsimo/lora)
+and calls the local vendored package's `lora_pti` executable. Install its
+dependencies, install the local package, and verify the entry point before
+training:
 
 ```bash
 python -m pip install -r third_party/lora_requirements.txt
+python -m pip install -e third_party --no-deps
 command -v lora_pti
+lora_pti --help
 ```
 
-If the command is absent, install the local LoRA package under `third_party/`
-using the setup method appropriate for the environment, then repeat the
-check. The i2i scripts import the vendored implementation directly.
+The `--no-deps` flag avoids replacing the already selected PyTorch/CUDA stack;
+the LoRA-specific dependencies are installed by the preceding command. The
+i2i scripts import the same vendored implementation directly.
 
 ### 📊 Dataset and model links
 
