@@ -1,7 +1,8 @@
 # CMDS-AD: Cross-Modal Dual-Stream Decoupling for Few-Shot Anomaly Detection
 
-[📄 Paper](https://arxiv.org/abs/2606.20300) ·
-[🌐 Project Page](https://cmds-ad.github.io/) ·
+[![ARXIV · PAPER](https://img.shields.io/badge/ARXIV-PAPER?style=for-the-badge&labelColor=555555&color=0088cc&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2606.20300)
+[![PROJECT · PAGE](https://img.shields.io/badge/PROJECT-PAGE?style=for-the-badge&labelColor=555555&color=0088cc&logo=googlechrome&logoColor=white)](https://cmds-ad.github.io/)
+
 [💾 Model Weights](https://drive.google.com/file/d/1CNmmkdtiumA47AJ1PoZ4klwAyvFbvvYq/view?usp=sharing)
 
 Official code release for CMDS-AD, a cross-modal few-shot anomaly detection
