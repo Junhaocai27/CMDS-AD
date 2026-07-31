@@ -94,7 +94,7 @@ class SingleStreamDataset(Dataset):
             unique_stems = unique_stems[:shots]
 
         self.file_list = []
-        seeds = ["42", "1024", "2023", "8888", "12345"]
+        seeds = ["42", "1024", "2026", "8888", "12345"]
 
         for stem in unique_stems:
             if mode == 'real':

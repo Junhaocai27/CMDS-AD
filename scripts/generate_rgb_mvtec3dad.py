@@ -37,7 +37,7 @@ PROMPT_TEMPLATE = "a low high light and real photo of <{cat}>"
 STRENGTH = 0.2
 GUIDANCE_SCALE = 4
 STEPS = 50
-FIXED_SEEDS = [42, 1024, 2023, 8888, 12345]
+FIXED_SEEDS = [42, 1024, 2026, 8888, 12345]
 ALL_CATEGORIES = [
     "bagel", "cable_gland", "carrot", "cookie", "dowel",
     "foam", "peach", "potato", "rope", "tire"

@@ -197,41 +197,35 @@ Eyecandies: CandyCane ChocolateCookie ChocolatePraline Confetto GummyBear
 ### Dataset profile: MVTec 3D-AD
 
 ```bash
-export DATASET=mvtec
-export CLASSES="bagel carrot"
-export DATASET_ROOT="$PWD/data/derived/mvtec_3d"
-export RGB_ROOT="$PWD/data/derived/output_generation_full"
-export TRAIN_REAL_ROOT="$PWD/data/derived/normal_output_train_new_full/real_normals"
-export TRAIN_EST_ROOT="$PWD/data/derived/normal_output_train_new_full/estimated_normals"
-export TEST_REAL_ROOT="$PWD/data/derived/normal_output_mv_format_infer/real_normals"
-export TEST_EST_ROOT="$PWD/data/derived/normal_output_mv_format_infer/estimated_normals"
-export MASK_ROOT="$PWD/data/derived/mvtec_3d_masks_generated"
-export CMDS_AD_CLASSES="$CLASSES"
-export CMDS_AD_GPUS="0,1"       # use "0" on a single-GPU machine
-export CMDS_AD_SD_MODEL="$PWD/weights/stable-diffusion-2-1-base"
-export CMDS_AD_MVTEC_ROOT="$DATASET_ROOT"
-export CMDS_AD_MVTEC_LORA_ROOT="$PWD/weights/lora_mvtec"
-export CMDS_AD_MVTEC_RGB_ROOT="$RGB_ROOT"
+DATASET=mvtec
+CLASSES="bagel carrot"
+DATASET_ROOT="$PWD/data/derived/mvtec_3d"
+RGB_ROOT="$PWD/data/derived/output_generation_full"
+TRAIN_REAL_ROOT="$PWD/data/derived/normal_output_train_new_full/real_normals"
+TRAIN_EST_ROOT="$PWD/data/derived/normal_output_train_new_full/estimated_normals"
+TEST_REAL_ROOT="$PWD/data/derived/normal_output_mv_format_infer/real_normals"
+TEST_EST_ROOT="$PWD/data/derived/normal_output_mv_format_infer/estimated_normals"
+MASK_ROOT="$PWD/data/derived/mvtec_3d_masks_generated"
+GPUS="0,1"       # use "0" on a single-GPU machine
+SD_MODEL="$PWD/weights/stable-diffusion-2-1-base"
+LORA_ROOT="$PWD/weights/lora_mvtec"
 ```
 
 ### Dataset profile: Eyecandies
 
 ```bash
-export DATASET=eyecandies
-export CLASSES="CandyCane ChocolateCookie"
-export DATASET_ROOT="$PWD/data/derived/eyecandies_mvtec_format"
-export RGB_ROOT="$PWD/data/derived/output_generation_eyecandies"
-export TRAIN_REAL_ROOT="$PWD/data/derived/normal_output_train_eyecandies/real_normals"
-export TRAIN_EST_ROOT="$PWD/data/derived/normal_output_train_eyecandies/estimated_normals"
-export TEST_REAL_ROOT="$PWD/data/derived/normal_output_eyecandies_infer/real_normals"
-export TEST_EST_ROOT="$PWD/data/derived/normal_output_eyecandies_infer/estimated_normals"
-export MASK_ROOT="$PWD/data/derived/eyecandies_masks_generated"
-export CMDS_AD_CLASSES="$CLASSES"
-export CMDS_AD_GPUS="0,1"
-export CMDS_AD_SD_MODEL="$PWD/weights/stable-diffusion-2-1-base"
-export CMDS_AD_EYECANDIES_ROOT="$DATASET_ROOT"
-export CMDS_AD_EYECANDIES_LORA_ROOT="$PWD/weights/lora_eyecandies"
-export CMDS_AD_EYECANDIES_RGB_ROOT="$RGB_ROOT"
+DATASET=eyecandies
+CLASSES="CandyCane ChocolateCookie"
+DATASET_ROOT="$PWD/data/derived/eyecandies_mvtec_format"
+RGB_ROOT="$PWD/data/derived/output_generation_eyecandies"
+TRAIN_REAL_ROOT="$PWD/data/derived/normal_output_train_eyecandies/real_normals"
+TRAIN_EST_ROOT="$PWD/data/derived/normal_output_train_eyecandies/estimated_normals"
+TEST_REAL_ROOT="$PWD/data/derived/normal_output_eyecandies_infer/real_normals"
+TEST_EST_ROOT="$PWD/data/derived/normal_output_eyecandies_infer/estimated_normals"
+MASK_ROOT="$PWD/data/derived/eyecandies_masks_generated"
+GPUS="0,1"
+SD_MODEL="$PWD/weights/stable-diffusion-2-1-base"
+LORA_ROOT="$PWD/weights/lora_eyecandies"
 ```
 
 ### Common data-generation commands
@@ -245,20 +239,43 @@ python scripts/prepare_rgb.py \
 ```
 
 Train the category-specific LoRA and generate five i2i images per original
-training RGB. MVTec and Eyecandies use separate launchers:
+training RGB. The `CMDS_AD_*` settings are scoped to each launcher command;
+they do not need to be set globally. Run only the block for the selected
+dataset profile:
+
+#### MVTec 3D-AD
 
 ```bash
-# MVTec profile
+CMDS_AD_CLASSES="$CLASSES" CMDS_AD_GPUS="$GPUS" \
+CMDS_AD_SD_MODEL="$SD_MODEL" CMDS_AD_MVTEC_ROOT="$DATASET_ROOT" \
+CMDS_AD_MVTEC_LORA_ROOT="$LORA_ROOT" \
 python scripts/train_lora_mvtec3dad.py
-python scripts/generate_rgb_mvtec3dad.py
 
-# Eyecandies profile
+CMDS_AD_CLASSES="$CLASSES" CMDS_AD_GPUS="$GPUS" \
+CMDS_AD_SD_MODEL="$SD_MODEL" CMDS_AD_MVTEC_ROOT="$DATASET_ROOT" \
+CMDS_AD_MVTEC_LORA_ROOT="$LORA_ROOT" CMDS_AD_MVTEC_RGB_ROOT="$RGB_ROOT" \
+python scripts/generate_rgb_mvtec3dad.py
+```
+
+#### Eyecandies
+
+```bash
+CMDS_AD_CLASSES="$CLASSES" CMDS_AD_GPUS="$GPUS" \
+CMDS_AD_SD_MODEL="$SD_MODEL" CMDS_AD_EYECANDIES_ROOT="$DATASET_ROOT" \
+CMDS_AD_EYECANDIES_LORA_ROOT="$LORA_ROOT" \
 python scripts/train_lora_eyecandies.py
+
+CMDS_AD_CLASSES="$CLASSES" CMDS_AD_GPUS="$GPUS" \
+CMDS_AD_SD_MODEL="$SD_MODEL" CMDS_AD_EYECANDIES_ROOT="$DATASET_ROOT" \
+CMDS_AD_EYECANDIES_LORA_ROOT="$LORA_ROOT" CMDS_AD_EYECANDIES_RGB_ROOT="$RGB_ROOT" \
 python scripts/generate_rgb_eyecandies.py
 ```
 
-The fixed i2i seeds are `42`, `1024`, `2023`, `8888`, and `12345`; defaults
+The fixed i2i seeds are `42`, `1024`, `2026`, `8888`, and `12345`; defaults
 are strength `0.2`, guidance scale `4`, and `50` diffusion steps.
+If an output directory was generated with a different seed list, rerun the
+i2i command to keep filenames and image contents consistent; do not rename
+the existing images manually.
 
 Generate training and test real normals:
 
@@ -367,19 +384,19 @@ schedule.
 Select the same dataset profile used for data generation. For MVTec, set:
 
 ```bash
-export INFER_SCRIPT=test_anomaly_fusion_mvtec3dad.py
-export CKPT_ROOT_3D2D=checkpoints/checkpoints_dual_3dto2d
-export CKPT_ROOT_2D3D=checkpoints/checkpoints_dual_2dto3d
-export RESULT_FILE=results/mvtec_result.txt
+INFER_SCRIPT=test_anomaly_fusion_mvtec3dad.py
+CKPT_ROOT_3D2D=checkpoints/checkpoints_dual_3dto2d
+CKPT_ROOT_2D3D=checkpoints/checkpoints_dual_2dto3d
+RESULT_FILE=results/mvtec_result.txt
 ```
 
 For Eyecandies, set instead:
 
 ```bash
-export INFER_SCRIPT=test_anomaly_fusion_eyecandies.py
-export CKPT_ROOT_3D2D=checkpoints/checkpoints_eyecandies_dual_3dto2d
-export CKPT_ROOT_2D3D=checkpoints/checkpoints_eyecandies_dual_2dto3d
-export RESULT_FILE=results/eyecandies_result.txt
+INFER_SCRIPT=test_anomaly_fusion_eyecandies.py
+CKPT_ROOT_3D2D=checkpoints/checkpoints_eyecandies_dual_3dto2d
+CKPT_ROOT_2D3D=checkpoints/checkpoints_eyecandies_dual_2dto3d
+RESULT_FILE=results/eyecandies_result.txt
 ```
 
 Run the same evaluator command for either profile:
