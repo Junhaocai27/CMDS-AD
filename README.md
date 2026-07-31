@@ -60,6 +60,25 @@ For released-checkpoint evaluation, skip LoRA training, i2i generation, and
 CMDS-AD training. Prepare the dataset, generate the test normal maps and
 foreground masks, then follow [Inference](#-inference).
 
+### ⚡ Fast evaluation with released checkpoints
+
+This path does not require LoRA, Stable Diffusion, i2i generation, or
+CMDS-AD retraining. It requires the dataset, DINO, Marigold, PointNet2, and
+the CMDS-AD checkpoints:
+
+```text
+1. Download and extract the CMDS-AD checkpoints.
+2. Complete Dataset preparation.
+3. Choose one Dataset profile.
+4. Run only the test-split commands in steps 3 and 4 below.
+5. Run the matching foreground-mask block in step 5.
+6. Set the checkpoint prefix and run Inference.
+```
+
+Do not run the LoRA/i2i commands or the CMDS-AD training command on this path.
+Inference uses original test RGB together with test real normals, test
+estimated normals, foreground masks, and the released checkpoints.
+
 ## 🧰 Setup
 
 Linux, CUDA, and Python 3.10 are recommended. Install a compatible
@@ -72,9 +91,15 @@ cd CMDS-AD
 conda create -n cmds-ad python=3.10 -y
 conda activate cmds-ad
 python -m pip install --upgrade pip
+python -m pip install -r requirements-pytorch-cu128.txt
 python -m pip install -r requirements.txt
 mkdir -p data/raw data/derived weights checkpoints results
 ```
+
+`requirements-pytorch-cu128.txt` installs the exact PyTorch 2.7.0 and
+torchvision 0.22.0 CUDA 12.8 pair used for validation. If using another
+supported CUDA runtime, install its compatible PyTorch/torchvision pair in the
+same place, then install `requirements.txt`.
 
 Install PointNet2 for foreground-mask generation:
 

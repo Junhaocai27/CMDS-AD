@@ -1,0 +1,5 @@
+# PyTorch pair used by the validated MMADdiff environment.
+# Install this file before requirements.txt on a CUDA 12.8 machine.
+--index-url https://download.pytorch.org/whl/cu128
+torch==2.7.0
+torchvision==0.22.0
