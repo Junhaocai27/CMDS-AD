@@ -128,8 +128,8 @@ dependencies.
 | Asset | Download/source | Used for |
 |---|---|---|
 | MVTec 3D-AD | [Dataset page](https://www.mvtec.com/research-teaching/datasets/mvtec-3d-ad) | RGB, XYZ, anomaly GT |
-| Eyecandies | [Project page](https://eyecan-ai.github.io/) · [official downloader](https://github.com/eyecan-ai/eyecandies) | RGB, XYZ, anomaly GT |
-| Stable Diffusion 2.1 | [Hugging Face model card](https://huggingface.co/stabilityai/stable-diffusion-2-1-base) | LoRA and i2i RGB |
+| Eyecandies | [Dataset page](https://github.com/eyecan-ai/eyecandies) | RGB, XYZ, anomaly GT |
+| Stable Diffusion 2.1 | [Hugging Face model card](https://huggingface.co/sd-research/stable-diffusion-2-1-base) | LoRA and i2i RGB |
 | Marigold normals | [Hugging Face model card](https://huggingface.co/prs-eth/marigold-normals-v1-1) | Estimated normals |
 | DINO ViT-B/8 | [Hugging Face model card](https://huggingface.co/timm/vit_base_patch8_224.dino) | RGB/normal features |
 
