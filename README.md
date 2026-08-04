@@ -5,6 +5,7 @@
   <a href="https://cmds-ad.github.io/"><img src="https://img.shields.io/badge/PROJECT-PAGE?style=for-the-badge&labelColor=555555&color=0077b6&logo=googlechrome&logoColor=white" alt="Project page"></a>
   <a href="https://drive.google.com/file/d/1CNmmkdtiumA47AJ1PoZ4klwAyvFbvvYq/view?usp=sharing"><img src="https://img.shields.io/badge/CMDS--AD-CHECKPOINTS?style=for-the-badge&labelColor=555555&color=2e7d32&logo=googledrive&logoColor=white" alt="CMDS-AD checkpoints"></a>
   <a href="https://drive.google.com/drive/folders/1mMaKN-oPRo2KqjjuxsdcwDdq2cvnJ5fk?usp=drive_link"><img src="https://img.shields.io/badge/LORA-WEIGHTS?style=for-the-badge&labelColor=555555&color=f57c00&logo=googledrive&logoColor=white" alt="LoRA weights"></a>
+  <a href="https://huggingface.co/Junhaocai27/CMDS-AD"><img src="https://img.shields.io/badge/HUGGINGFACE-WEIGHTS?style=for-the-badge&labelColor=555555&color=ffcc00&logo=huggingface&logoColor=black" alt="HuggingFace weights"></a>
 </p>
 
 Official implementation of CMDS-AD, a cross-modal few-shot anomaly detection
@@ -17,6 +18,7 @@ foreground-mask generation, dual-direction training, and evaluation pipeline.
 - **Jun 18, 2026** · CMDS-AD was accepted to ECCV.
 - **Jun 20, 2026** · We released the arXiv version and project page.
 - **Jul 31, 2026** · We released the complete source code and trained weights.
+- **Aug 4, 2026** · We released the pretrained checkpoints on [Hugging Face](https://huggingface.co/Junhaocai27/CMDS-AD) and [Google Drive](https://drive.google.com/file/d/1CNmmkdtiumA47AJ1PoZ4klwAyvFbvvYq/view?usp=sharing) for reproducibility.
 
 ## 🚀 Quick start
 
