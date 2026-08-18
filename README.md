@@ -20,6 +20,7 @@ foreground-mask generation, dual-direction training, and evaluation pipeline.
 - **Jun 20, 2026** · We released the arXiv version and project page.
 - **Jul 31, 2026** · We released the complete source code and trained weights.
 - **Aug 4, 2026** · We released the pretrained checkpoints on Hugging Face and Google Drive for reproducibility.
+- **Aug 18, 2026** · We released the independently retrained RTX 4090 checkpoints and verified that their performance is comparable to the RTX 5090 submission weights on both MVTec 3D-AD and Eyecandies.
 
 ## 🚀 Quick start
 
