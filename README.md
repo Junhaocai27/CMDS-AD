@@ -13,6 +13,8 @@
 
 [![ECCV 2026 poster](./CMDS-AD_ECCV2026_Poster.png)](./CMDS-AD_ECCV2026_Poster.pdf)
 
+The [project page](https://cmds-ad.github.io/) includes the CMDS-AD presentation video.
+
 Official implementation of CMDS-AD, a cross-modal few-shot anomaly detection
 framework for 3D industrial inspection. This repository includes the complete
 preprocessing, RGB augmentation, real/estimated normal generation,
