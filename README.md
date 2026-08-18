@@ -97,7 +97,7 @@ the change columns are signed changes in percentage points, computed as
 `retrained (4090) - submission (5090)`. Positive values indicate an increase;
 negative values indicate a decrease.
 
-| Dataset | Shots | Submission (5090) I-AUROC | Submission (5090) AUPRO@30% | Retrained (4090) I-AUROC | Retrained (4090) AUPRO@30% | Change I-AUROC | Change AUPRO@30% |
+| Dataset | Shots | Submission (5090) I&#8209;AUROC | Submission (5090) AUPRO@30% | Retrained (4090) I&#8209;AUROC | Retrained (4090) AUPRO@30% | Change I&#8209;AUROC | Change AUPRO@30% |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | MVTec&nbsp;3D&#8209;AD | 1 | 79.60 | 94.20 | 79.58 | 94.15 | -0.02 | -0.05 |
 | MVTec&nbsp;3D&#8209;AD | 2 | 83.00 | 94.80 | 81.84 | 94.55 | -1.16 | -0.25 |
