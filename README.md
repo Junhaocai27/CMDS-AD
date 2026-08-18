@@ -93,24 +93,27 @@ through the **LORA WEIGHTS** badge and should be placed under
 `weights/lora_eyecandies/<class>/final_lora.safetensors`.
 
 The main validation metrics are shown below. All metric values are percentages;
-the difference columns are absolute differences in percentage points, computed
-as `|retrained (4090) - submission (5090)|`.
+the change columns are signed changes in percentage points, computed as
+`retrained (4090) - submission (5090)`. Positive values indicate an increase;
+negative values indicate a decrease.
 
-| Dataset | Shots | Submission (5090) I-AUROC | Submission (5090) AUPRO@30% | Retrained (4090) I-AUROC | Retrained (4090) AUPRO@30% | Absolute difference I-AUROC | Absolute difference AUPRO@30% |
+| Dataset | Shots | Submission (5090) I-AUROC | Submission (5090) AUPRO@30% | Retrained (4090) I-AUROC | Retrained (4090) AUPRO@30% | Change I-AUROC | Change AUPRO@30% |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| MVTec&nbsp;3D&#8209;AD | 1 | 79.60 | 94.20 | 79.58 | 94.15 | 0.02 | 0.05 |
-| MVTec&nbsp;3D&#8209;AD | 2 | 83.00 | 94.80 | 81.84 | 94.55 | 1.16 | 0.25 |
-| MVTec&nbsp;3D&#8209;AD | 4 | 87.10 | 95.80 | 87.38 | 95.78 | 0.28 | 0.02 |
-| Eyecandies | 1 | 77.20 | 85.50 | 76.78 | 85.14 | 0.42 | 0.36 |
-| Eyecandies | 2 | 80.20 | 85.80 | 79.94 | 86.36 | 0.26 | 0.56 |
-| Eyecandies | 4 | 82.70 | 87.70 | 84.27 | 87.47 | 1.57 | 0.23 |
+| MVTec&nbsp;3D&#8209;AD | 1 | 79.60 | 94.20 | 79.58 | 94.15 | -0.02 | -0.05 |
+| MVTec&nbsp;3D&#8209;AD | 2 | 83.00 | 94.80 | 81.84 | 94.55 | -1.16 | -0.25 |
+| MVTec&nbsp;3D&#8209;AD | 4 | 87.10 | 95.80 | 87.38 | 95.78 | +0.28 | -0.02 |
+| Eyecandies | 1 | 77.20 | 85.50 | 76.78 | 85.14 | -0.42 | -0.36 |
+| Eyecandies | 2 | 80.20 | 85.80 | 79.94 | 86.36 | -0.26 | +0.56 |
+| Eyecandies | 4 | 82.70 | 87.70 | 84.27 | 87.47 | +1.57 | -0.23 |
 
-The retrained version remains close to the submission version overall. The
-largest I-AUROC difference is 1.57 points on Eyecandies 4-shot, while the
-largest AUPRO@30% difference is 0.56 points on Eyecandies 2-shot. Because the
-training scripts do not force a fully deterministic CUDA/random-number
-configuration, these values measure practical cross-hardware reproduction
-rather than an exact hardware-isolation experiment.
+The retrained version remains close to the submission version overall. I-AUROC
+increases by 1.57 points on Eyecandies 4-shot, while AUPRO@30% increases by
+0.56 points on Eyecandies 2-shot. The largest decreases are 1.16 I-AUROC
+points on MVTec 3D-AD 2-shot and 0.36 AUPRO@30% points on Eyecandies 1-shot.
+Because the training scripts do not force a fully deterministic
+CUDA/random-number configuration, these values measure practical
+cross-hardware reproduction rather than an exact hardware-isolation
+experiment.
 
 For released-checkpoint evaluation, skip LoRA training, i2i generation, and
 CMDS-AD training. Prepare the dataset, generate the test normal maps and
