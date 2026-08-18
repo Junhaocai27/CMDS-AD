@@ -86,25 +86,11 @@ badge above. Its results were evaluated with the same test RGB, test real
 normals, test estimated normals, foreground masks, and inference protocol as
 the released checkpoints.
 
-The folder contains the final-only archive and its verification files:
-
-```text
-mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar
-mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar.sha256
-mvtec3dad_eyecandies_retrained_final_only_checkpoints_manifest.txt
-```
-
-Extract the archive at the repository root. It already contains the required
-`checkpoints/` prefix and includes only the final model files:
-
-```bash
-sha256sum -c mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar.sha256
-tar -xf mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar
-```
-
-The LoRA files are distributed separately through the **LORA WEIGHTS** badge
-and should be placed under `weights/lora_mvtec/<class>/final_lora.safetensors`
-and `weights/lora_eyecandies/<class>/final_lora.safetensors`.
+The retrained package contains the final model files and follows the
+checkpoint layout described above. The LoRA files are distributed separately
+through the **LORA WEIGHTS** badge and should be placed under
+`weights/lora_mvtec/<class>/final_lora.safetensors` and
+`weights/lora_eyecandies/<class>/final_lora.safetensors`.
 
 The main validation metrics are shown below. All metric values are percentages;
 the difference columns are absolute differences in percentage points, computed
