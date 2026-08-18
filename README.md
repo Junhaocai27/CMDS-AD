@@ -4,6 +4,7 @@
   <a href="https://arxiv.org/abs/2606.20300"><img src="https://img.shields.io/badge/ARXIV-PAPER?style=for-the-badge&labelColor=555555&color=b31b1b&logo=arxiv&logoColor=white" alt="Paper"></a>
   <a href="https://cmds-ad.github.io/"><img src="https://img.shields.io/badge/PROJECT-PAGE?style=for-the-badge&labelColor=555555&color=0077b6&logo=googlechrome&logoColor=white" alt="Project page"></a>
   <a href="https://drive.google.com/file/d/1CNmmkdtiumA47AJ1PoZ4klwAyvFbvvYq/view?usp=sharing"><img src="https://img.shields.io/badge/CMDS--AD-CHECKPOINTS?style=for-the-badge&labelColor=555555&color=2e7d32&logo=googledrive&logoColor=white" alt="CMDS-AD checkpoints"></a>
+  <a href="https://drive.google.com/drive/folders/1frxWmADRgxv-W9CVDWJdnHYZRG_5FdNZ"><img src="https://img.shields.io/badge/RETRAINED-CHECKPOINTS?style=for-the-badge&labelColor=555555&color=6a1b9a&logo=googledrive&logoColor=white" alt="Retrained checkpoints"></a>
   <a href="https://drive.google.com/drive/folders/1mMaKN-oPRo2KqjjuxsdcwDdq2cvnJ5fk?usp=drive_link"><img src="https://img.shields.io/badge/LORA-WEIGHTS?style=for-the-badge&labelColor=555555&color=f57c00&logo=googledrive&logoColor=white" alt="LoRA weights"></a>
   <a href="https://huggingface.co/Junhaocai27/CMDS-AD"><img src="https://img.shields.io/badge/HUGGINGFACE-WEIGHTS?style=for-the-badge&labelColor=555555&color=ffcc00&logo=huggingface&logoColor=white" alt="HuggingFace weights"></a>
 </p>
@@ -52,11 +53,64 @@ checkpoints/checkpoints_eyecandies_dual_3dto2d_<class>_<shots>shot/
 Each CMDS-AD checkpoint directory contains the corresponding
 `model_real_*_final.pth` and `model_est_*_final.pth` files. The available shot
 values are `1`, `2`, and `4`; inference selects them with `_1shot`, `_2shot`,
-or `_4shot`. Older `_new3` checkpoint names remain supported.
+or `_4shot`.
 
 The release archive is source-only with respect to external assets: it does
 not include MVTec 3D-AD, Eyecandies, Stable Diffusion 2.1, Marigold, or DINO.
 Download those assets as described below.
+
+### 🖥️ 4090-retrained checkpoints and validation
+
+In addition to the checkpoints used for the paper results, we provide a
+separately retrained CMDS-AD checkpoint package for NVIDIA RTX 4090 GPUs. The
+package was trained from scratch on the 24 GB-safe configuration with
+`batch_size=1`, using both the generated RGB/estimated-normal stream and the
+real RGB/real-normal/mask stream. It covers both datasets, all ten categories
+per dataset, 1/2/4-shot settings, and both 2D→3D and 3D→2D directions.
+
+Download the complete retrained package from the **RETRAINED CHECKPOINTS**
+badge above. Its results were evaluated with the same test RGB, test real
+normals, test estimated normals, foreground masks, and inference protocol as
+the released checkpoints.
+
+The folder contains the final-only archive and its verification files:
+
+```text
+mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar
+mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar.sha256
+mvtec3dad_eyecandies_retrained_final_only_checkpoints_manifest.txt
+```
+
+Extract the archive at the repository root. It already contains the required
+`checkpoints/` prefix and includes only the final model files:
+
+```bash
+sha256sum -c mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar.sha256
+tar -xf mvtec3dad_eyecandies_retrained_final_only_checkpoints.tar
+```
+
+The LoRA files are distributed separately through the **LORA WEIGHTS** badge
+and should be placed under `weights/lora_mvtec/<class>/final_lora.safetensors`
+and `weights/lora_eyecandies/<class>/final_lora.safetensors`.
+
+The main validation metrics are shown below. Values are percentages; the
+reference column is the result obtained with the original training run.
+
+| Dataset | Shots | 4090 I-AUROC | 4090 AUPRO@30% | Reference I-AUROC | Reference AUPRO@30% |
+|---|---:|---:|---:|---:|---:|
+| MVTec 3D-AD | 1 | 79.58 | 94.15 | 79.60 | 94.20 |
+| MVTec 3D-AD | 2 | 81.84 | 94.55 | 83.00 | 94.80 |
+| MVTec 3D-AD | 4 | 87.38 | 95.78 | 87.10 | 95.80 |
+| Eyecandies | 1 | 76.78 | 85.14 | 77.20 | 85.50 |
+| Eyecandies | 2 | 79.94 | 86.36 | 80.20 | 85.80 |
+| Eyecandies | 4 | 84.27 | 87.47 | 82.70 | 87.70 |
+
+The 4090 retraining reproduces the reference performance closely overall. The
+largest difference is a 1.16-point lower image-level AUROC on MVTec 3D-AD
+2-shot; its AUPRO@30% differs by only 0.25 points. Because the training
+scripts do not force a fully deterministic CUDA/random-number configuration,
+these values measure a practical 4090 reproduction rather than an exact
+hardware-isolation experiment.
 
 For released-checkpoint evaluation, skip LoRA training, i2i generation, and
 CMDS-AD training. Prepare the dataset, generate the test normal maps and
