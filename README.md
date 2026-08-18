@@ -9,6 +9,8 @@
   <a href="https://huggingface.co/Junhaocai27/CMDS-AD"><img src="https://img.shields.io/badge/HUGGINGFACE-WEIGHTS?style=for-the-badge&labelColor=555555&color=ffcc00&logo=huggingface&logoColor=white" alt="HuggingFace weights"></a>
 </p>
 
+ECCV 2026 poster: [download the PDF](./CMDS-AD_ECCV2026_Poster.pdf).
+
 Official implementation of CMDS-AD, a cross-modal few-shot anomaly detection
 framework for 3D industrial inspection. This repository includes the complete
 preprocessing, RGB augmentation, real/estimated normal generation,
