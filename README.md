@@ -16,7 +16,7 @@ foreground-mask generation, dual-direction training, and evaluation pipeline.
 
 ## 📰 News
 
-- **Jun 18, 2026** · CMDS-AD was accepted to ECCV.
+- **Jun 18, 2026** · CMDS-AD was accepted to ECCV 2026.
 - **Jun 20, 2026** · We released the arXiv version and project page.
 - **Jul 31, 2026** · We released the complete source code and trained weights.
 - **Aug 4, 2026** · We released the pretrained checkpoints on Hugging Face and Google Drive for reproducibility.
