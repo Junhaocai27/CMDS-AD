@@ -11,7 +11,7 @@
 
 ### ECCV 2026 Poster
 
-[ECCV 2026 poster (PDF)](./CMDS-AD_ECCV2026_Poster.pdf)
+[![ECCV 2026 poster](./CMDS-AD_ECCV2026_Poster.png)](./CMDS-AD_ECCV2026_Poster.png)
 
 The [project page](https://cmds-ad.github.io/) includes the CMDS-AD presentation video.
 
