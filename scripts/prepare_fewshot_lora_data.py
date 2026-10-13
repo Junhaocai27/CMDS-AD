@@ -90,7 +90,9 @@ def prepare_one(work_root: Path, dataset: str, shots: int, class_name: str, over
 
     originals_dir = lora_originals_dir(work_root, dataset, shots, class_name)
     augmented_dir = lora_augmented_dir(work_root, dataset, shots, class_name)
-    if overwrite:
+    # A partially completed or reused strict work root must not retain files
+    # from another support set: lora_pti consumes every image in this folder.
+    if overwrite or originals_dir.exists() or augmented_dir.exists():
         for directory in (originals_dir, augmented_dir):
             if directory.exists():
                 shutil.rmtree(directory)

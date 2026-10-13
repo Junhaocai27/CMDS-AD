@@ -51,8 +51,17 @@ def validate_one(work_root: Path, dataset: str, shots: int, class_name: str, sta
         return errors
 
     augmented = lora_augmented_dir(work_root, dataset, shots, class_name)
-    if len(files(augmented)) != shots * len(manifest["offline_augmentations"]):
-        errors.append("LoRA augmentation count does not match the manifest")
+    expected_augmented = {
+        f"{stem}__{augmentation}.png"
+        for stem in selected
+        for augmentation in manifest["offline_augmentations"]
+    }
+    actual_augmented = files(augmented)
+    if actual_augmented != expected_augmented:
+        errors.append(
+            "LoRA augmentation mismatch: "
+            f"expected {sorted(expected_augmented)}, got {sorted(actual_augmented)}"
+        )
     if not lora_weight_path(work_root, dataset, shots, class_name).is_file():
         errors.append("final_lora.safetensors is missing")
     if stage == "lora":
