@@ -49,8 +49,8 @@ SPECS = {
         test_real_normal_subdir="data/derived/normal_output_mv_format_infer/real_normals",
         test_est_normal_subdir="data/derived/normal_output_mv_format_infer/estimated_normals",
         trainer_dataset="mvtec",
-        trainer_2dto3d="train_2d_to_3d_mvtec3dad.py",
-        trainer_3dto2d="train_3d_to_2d_mvtec3dad.py",
+        trainer_2dto3d="scripts/training/train_2d_to_3d_mvtec3dad.py",
+        trainer_3dto2d="scripts/training/train_3d_to_2d_mvtec3dad.py",
     ),
     "eyecandies": DatasetSpec(
         name="eyecandies",
@@ -61,8 +61,8 @@ SPECS = {
         test_real_normal_subdir="data/derived/normal_output_eyecandies_infer/real_normals",
         test_est_normal_subdir="data/derived/normal_output_eyecandies_infer/estimated_normals",
         trainer_dataset="eyecandies",
-        trainer_2dto3d="train_2d_to_3d_eyecandies.py",
-        trainer_3dto2d="train_3d_to_2d_eyecandies.py",
+        trainer_2dto3d="scripts/training/train_2d_to_3d_eyecandies.py",
+        trainer_3dto2d="scripts/training/train_3d_to_2d_eyecandies.py",
     ),
 }
 

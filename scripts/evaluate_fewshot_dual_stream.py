@@ -58,8 +58,9 @@ def validate_shot(args: argparse.Namespace, classes: list[str], shots: int) -> N
 def build_command(args: argparse.Namespace, classes: list[str], shots: int) -> list[str]:
     root = release_root()
     spec = get_spec(args.dataset)
-    script = root / ("test_anomaly_fusion_mvtec3dad.py" if args.dataset == "mvtec3dad"
-                     else "test_anomaly_fusion_eyecandies.py")
+    script = root / ("scripts/inference/test_anomaly_fusion_mvtec3dad.py"
+                     if args.dataset == "mvtec3dad"
+                     else "scripts/inference/test_anomaly_fusion_eyecandies.py")
     checkpoint_root = args.work_root / "checkpoints" / args.dataset / f"{shots}shot"
     prefix_3d2d = "checkpoints_dual_3dto2d" if args.dataset == "mvtec3dad" else "checkpoints_eyecandies_dual_3dto2d"
     prefix_2d3d = "checkpoints_dual_2dto3d" if args.dataset == "mvtec3dad" else "checkpoints_eyecandies_dual_2dto3d"

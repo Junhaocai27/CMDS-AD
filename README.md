@@ -42,6 +42,22 @@ The complete workflow uses original RGB, generated RGB, real normals, estimated
 normals, and foreground masks. Anomaly ground-truth masks are used for test
 metrics; foreground masks are used as the object-region constraint.
 
+## 🗂️ Repository layout
+
+The repository root is intentionally limited to documentation, configuration,
+and top-level component folders. Executable entry points are grouped by stage:
+
+```text
+scripts/
+├── training/       # 2D→3D and 3D→2D dual-stream training entry points
+├── inference/      # Dataset-specific anomaly inference entry points
+├── visualization/  # Foreground-mask generation entry points
+└── *.py            # Workflow orchestration, preprocessing, and validation
+```
+
+Use the documented `scripts/...` commands below; the orchestration scripts
+resolve the grouped entry points automatically.
+
 ## 📦 Released weights
 
 Download the paper-submission 2D→3D/3D→2D checkpoints from the **SUBMISSION
@@ -482,7 +498,7 @@ replace it with one selected class for a smoke test.
 <summary>🎯 MVTec 3D-AD foreground masks</summary>
 
 ```bash
-python mask_vis_mvtec3dad.py \
+python scripts/visualization/generate_foreground_masks_mvtec3dad.py \
   --dataset_path "$DATASET_ROOT" \
   --save_dir "$MASK_ROOT" \
   --class_name all \
@@ -495,7 +511,7 @@ python mask_vis_mvtec3dad.py \
 <summary>🎯 Eyecandies foreground masks</summary>
 
 ```bash
-python mask_vis_eyecandies.py \
+python scripts/visualization/generate_foreground_masks_eyecandies.py \
   --dataset_path "$DATASET_ROOT" \
   --save_dir "$MASK_ROOT" \
   --class_name all \
@@ -545,12 +561,12 @@ checkpoint prefixes for the selected dataset:
 
 ```bash
 # MVTec 3D-AD
-INFER_SCRIPT=test_anomaly_fusion_mvtec3dad.py
+INFER_SCRIPT=scripts/inference/test_anomaly_fusion_mvtec3dad.py
 CKPT_ROOT_3D2D=checkpoints/checkpoints_dual_3dto2d
 CKPT_ROOT_2D3D=checkpoints/checkpoints_dual_2dto3d
 
 # Eyecandies (use these instead for the Eyecandies profile)
-# INFER_SCRIPT=test_anomaly_fusion_eyecandies.py
+# INFER_SCRIPT=scripts/inference/test_anomaly_fusion_eyecandies.py
 # CKPT_ROOT_3D2D=checkpoints/checkpoints_eyecandies_dual_3dto2d
 # CKPT_ROOT_2D3D=checkpoints/checkpoints_eyecandies_dual_2dto3d
 

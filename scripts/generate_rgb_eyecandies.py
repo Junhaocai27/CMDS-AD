@@ -16,7 +16,7 @@ sys.path.insert(0, str(RELEASE_ROOT / "third_party"))
 
 from lora_diffusion.lora import tune_lora_scale, patch_pipe
 
-# Rich 库导入
+
 from rich.console import Console
 from rich.live import Live
 from rich.table import Table
@@ -25,14 +25,14 @@ from rich import box
 from rich.panel import Panel
 from rich.layout import Layout
 
-# ================= 配置区域 (适配 Eyecandies) =================
+
 
 MODEL_ID = os.getenv("CMDS_AD_SD_MODEL", str(RELEASE_ROOT / "weights/stable-diffusion-2-1-base"))
-# 修改为 Eyecandies 的 LoRA 权重路径 (对应上一步的输出)
+
 LORA_PATH_TEMPLATE = os.path.join(os.getenv("CMDS_AD_EYECANDIES_LORA_ROOT", str(RELEASE_ROOT / "weights/lora_eyecandies")), "{cat}", "final_lora.safetensors")
-# 修改为 Eyecandies 的数据集路径
+
 INPUT_DIR_TEMPLATE = os.path.join(os.getenv("CMDS_AD_EYECANDIES_ROOT", str(RELEASE_ROOT / "data/derived/eyecandies_mvtec_format")), "{cat}", "train/good/rgb")
-# 修改为 Eyecandies 的生成输出路径，防止覆盖 MVTec 的数据
+
 OUTPUT_DIR_TEMPLATE = os.path.join(os.getenv("CMDS_AD_EYECANDIES_RGB_ROOT", str(RELEASE_ROOT / "data/derived/output_generation_eyecandies")), "{cat}")
 
 NUM_FEW_SHOT = 10
@@ -57,33 +57,29 @@ GPU_ASSIGNMENT = {
 # ===========================================
 
 def worker_process(gpu_id, categories, queue):
-    """
-    工作进程：负责加载模型和生成，通过 Queue 向主进程汇报进度
-    消息格式: (type, data)
-    """
     try:
-        # 1. 启动信号
+
         queue.put(("log", (gpu_id, "Starting Process")))
 
         for category in categories:
-            # 2. 状态更新：准备中
+
             queue.put(("status", (gpu_id, category, "Loading Model...", 0, 0)))
 
-            # --- 路径构建 ---
+
             lora_path = LORA_PATH_TEMPLATE.format(cat=category)
             input_dir = INPUT_DIR_TEMPLATE.format(cat=category)
             output_dir = OUTPUT_DIR_TEMPLATE.format(cat=category)
             prompt = PROMPT_TEMPLATE.format(cat=category)
 
-            # 注意：请确保你的 LoRA 训练脚本最终保存的文件名是 final_lora.safetensors
-            # 如果是 step_1000.safetensors，请在上方 LORA_PATH_TEMPLATE 中对应修改
+
+
             if not os.path.exists(lora_path):
                 queue.put(("log", (gpu_id, f"[Skip] No LoRA for {category}")))
                 continue
 
             os.makedirs(output_dir, exist_ok=True)
 
-            # --- 模型加载 (每次重载以防权重污染) ---
+
             try:
                 pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
                     MODEL_ID,
@@ -101,7 +97,7 @@ def worker_process(gpu_id, categories, queue):
                 queue.put(("error", (gpu_id, f"Model Error: {str(e)[:20]}")))
                 continue
 
-            # --- 准备数据 ---
+
             image_extensions = ['*.png', '*.jpg', '*.jpeg']
             all_image_paths = []
             for ext in image_extensions:
@@ -112,17 +108,17 @@ def worker_process(gpu_id, categories, queue):
 
             total_tasks = len(selected_paths)
 
-            # 3. 状态更新：开始生成
-            # 格式: (gpu_id, category_name, status_text, current_progress, total_progress)
+
+
             queue.put(("status", (gpu_id, category, "Generating...", 0, total_tasks)))
 
-            # --- 生成循环 ---
+
             for i, img_path in enumerate(selected_paths):
                 file_name = os.path.basename(img_path)
                 file_stem = os.path.splitext(file_name)[0]
 
                 try:
-                    # 复制原图
+
                     target_real_path = os.path.join(output_dir, file_name)
                     if not os.path.exists(target_real_path):
                         shutil.copy(img_path, target_real_path)
@@ -147,10 +143,10 @@ def worker_process(gpu_id, categories, queue):
                 except Exception as e:
                     queue.put(("log", (gpu_id, f"Error {file_name}: {e}")))
 
-                # 4. 进度更新
+
                 queue.put(("progress", (gpu_id, i + 1)))
 
-            # 释放显存
+
             del pipe
             torch.cuda.empty_cache()
 
@@ -161,13 +157,12 @@ def worker_process(gpu_id, categories, queue):
     except Exception as e:
         queue.put(("error", (gpu_id, str(e))))
 
-# ================= UI 渲染逻辑 =================
+
 
 def make_table(gpu_states):
-    """生成 Rich 表格"""
     table = Table(box=box.ROUNDED, expand=True, title="Eyecandies Img2Img Generation Status")
     table.add_column("GPU", justify="center", style="magenta", width=6)
-    table.add_column("Category", style="cyan", width=18) # 略微调宽以适应较长的类别名如 ChocolatePraline
+    table.add_column("Category", style="cyan", width=18)
     table.add_column("Progress", ratio=1)
     table.add_column("Count", justify="right", width=10)
     table.add_column("Status", style="dim", width=20)
@@ -175,13 +170,13 @@ def make_table(gpu_states):
     for gpu_id in sorted(gpu_states.keys()):
         state = gpu_states[gpu_id]
 
-        # 构造进度条
+
         if state["total"] > 0:
             completed = state["completed"]
             total = state["total"]
             percent = (completed / total) * 100
 
-            # 使用 unicode 块来模拟进度条
+
             bar_len = 20
             filled_len = int(bar_len * (completed / total))
             bar = "█" * filled_len + "░" * (bar_len - filled_len)
@@ -208,21 +203,21 @@ def make_table(gpu_states):
 def main():
     multiprocessing.set_start_method('spawn', force=True)
 
-    # 创建通信队列
+
     manager = multiprocessing.Manager()
     queue = manager.Queue()
 
     console = Console()
     console.print("[bold green]Starting Parallel Img2Img Generation for Eyecandies...[/bold green]")
 
-    # 启动进程
+
     processes = []
     for gpu_id, cats in GPU_ASSIGNMENT.items():
         p = multiprocessing.Process(target=worker_process, args=(gpu_id, cats, queue))
         p.start()
         processes.append(p)
 
-    # 初始化本地状态
+
     gpu_states = {
         gid: {
             "category": "-",
@@ -236,11 +231,11 @@ def main():
 
     active_gpus = len(GPU_ASSIGNMENT)
 
-    # UI 循环
+
     with Live(make_table(gpu_states), refresh_per_second=10) as live:
         while active_gpus > 0:
             try:
-                # 非阻塞获取消息
+
                 while not queue.empty():
                     msg_type, data = queue.get_nowait()
 
@@ -258,7 +253,7 @@ def main():
                         gpu_states[gid]["completed"] = curr
 
                     elif msg_type == "log":
-                        # (gpu_id, msg) - 可以选择打印到下方，或者只是更新状态
+
                         pass
 
                     elif msg_type == "done":
@@ -271,7 +266,7 @@ def main():
                         gid, err = data
                         gpu_states[gid]["error"] = True
                         gpu_states[gid]["status"] = err
-                        # 出错不一定退出，但为了逻辑简单，这里视为该 GPU 结束
+
                         active_gpus -= 1
 
                 live.update(make_table(gpu_states))

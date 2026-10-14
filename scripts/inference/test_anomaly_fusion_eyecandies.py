@@ -1,9 +1,17 @@
+"""Run dual-stream anomaly inference for Eyecandies."""
+
+from pathlib import Path
+import sys
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
 import warnings
 warnings.filterwarnings("ignore")
 
 import os
 
-import sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,7 +31,7 @@ import wandb
 from sklearn.metrics import roc_auc_score
 
 # =========================================================================
-# === 1. 环境与 WandB 设置 ===
+
 # =========================================================================
 os.environ["WANDB_START_METHOD"] = "thread"
 
@@ -34,39 +42,39 @@ except ImportError:
     print("Warning: 'utils.metrics_utils' not found. AUPRO metrics will be skipped.")
 
 # =========================================================================
-# 0. 参数解析
+
 # =========================================================================
 def get_args():
-    parser = argparse.ArgumentParser(description="Fusion Inference: Direct Box Filter Integration")
+    parser = argparse.ArgumentParser(description="Fusion Inference: Direct Box Filter Integration (Eyecandies)")
 
-    parser.add_argument("--dataset_root", type=str, default="./data/derived/mvtec_3d")
-    parser.add_argument("--real_normal_root", type=str, default="./data/derived/normal_output_mv_format_infer/real_normals")
-    parser.add_argument("--est_normal_root", type=str, default="./data/derived/normal_output_mv_format_infer/estimated_normals")
-    parser.add_argument("--mask_root", type=str, default="./data/derived/mvtec_3d_masks_generated",
+    parser.add_argument("--dataset_root", type=str, default="./data/derived/eyecandies_mvtec_format")
+    parser.add_argument("--real_normal_root", type=str, default="./data/derived/normal_output_eyecandies_infer/real_normals")
+    parser.add_argument("--est_normal_root", type=str, default="./data/derived/normal_output_eyecandies_infer/estimated_normals")
+    parser.add_argument("--mask_root", type=str, default="./data/derived/eyecandies_masks_generated",
                         help="Root directory for foreground masks")
 
-    parser.add_argument("--ckpt_root_3d2d", type=str, default="./checkpoints/checkpoints_dual_3dto2d",
+    parser.add_argument("--ckpt_root_3d2d", type=str, default="./checkpoints/checkpoints_eyecandies_dual_3dto2d",
                         help="Prefix for 3D->2D ckpt folders")
-    parser.add_argument("--ckpt_root_2d3d", type=str, default="./checkpoints/checkpoints_dual_2dto3d",
+    parser.add_argument("--ckpt_root_2d3d", type=str, default="./checkpoints/checkpoints_eyecandies_dual_2dto3d",
                         help="Prefix for 2D->3D ckpt folders")
     parser.add_argument("--ckpt_suffix", type=str, default="_4shot",
                         help="Suffix for checkpoint folder, e.g., _1shot, _2shot, or _4shot")
 
-    parser.add_argument("--output_dir", type=str, default="./inference_results_boxfilter")
+    parser.add_argument("--output_dir", type=str, default="./inference_results_eyecandies_boxfilter")
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--classes", nargs="+", default=None,
-                        help="Classes to evaluate; omit to evaluate all MVTec classes")
+                        help="Classes to evaluate; omit to evaluate all Eyecandies classes")
     parser.add_argument("--max_samples", type=int, default=0,
                         help="Limit samples per class for a smoke test; 0 means all samples")
 
-    parser.add_argument("--wandb_project", type=str, default="CFM_SOTA_Adaptive")
+    parser.add_argument("--wandb_project", type=str, default="CFM_SOTA_Eyecandies")
     parser.add_argument("--wandb_mode", choices=["disabled", "offline", "online"], default=os.getenv("WANDB_MODE", "disabled"))
     parser.add_argument("--device", choices=["cuda"], default="cuda")
 
     return parser.parse_args()
 
 # =========================================================================
-# 2. Dataset 类
+
 # =========================================================================
 class SingleClassDataset(Dataset):
     def __init__(self, dataset_root, real_root, est_root, class_name, mask_root=None, img_size=224):
@@ -172,7 +180,7 @@ class SingleClassDataset(Dataset):
         return (rgb, real_normal, est_normal, gt, s["name"], torch.tensor([s["is_anomaly"]]), fg_mask)
 
 # =========================================================================
-# 3. 模型定义
+
 # =========================================================================
 class TripleLayerExtractor(nn.Module):
     def __init__(self, device, target_layers=[4, 7, 11], img_size=224):
@@ -260,20 +268,19 @@ class HierarchicalGatedMapper(nn.Module):
         return out_flat, w4, out
 
 # =========================================================================
-# 4. 辅助距离计算函数
+
 # =========================================================================
 def compute_cosine_distance_torch(feat1, feat2):
     feat1 = F.normalize(feat1, p=2, dim=-1)
     feat2 = F.normalize(feat2, p=2, dim=-1)
     sim = F.cosine_similarity(feat1, feat2, dim=-1)
     dist = 1.0 - sim
-    # dist = torch.sqrt(torch.clamp(2.0 - 2.0 * sim, min=1e-8))
     B, N = dist.shape
     H = int(np.sqrt(N))
     return dist.view(B, 1, H, H)
 
 # =========================================================================
-# 5. 可视化工具
+
 # =========================================================================
 def denorm_rgb(tensor):
     m = torch.tensor([0.485, 0.456, 0.406]).view(3,1,1).to(tensor.device)
@@ -312,16 +319,15 @@ def generate_visual_row(rgb, map_3d2d, map_2d3d, map_fused, gt_mask, name):
     return fig
 
 # =========================================================================
-# 6. 处理逻辑 (彻底重写，贴近你的参考代码)
+
 # =========================================================================
 def resolve_checkpoint_dir(prefix, class_name, suffix):
     """Resolve clean checkpoint names and retain compatibility with older archives."""
     candidate = f"{prefix}_{class_name}{suffix}"
     if os.path.isdir(candidate):
         return candidate
-
-    legacy_prefix = prefix.replace("checkpoints_dual_3dto2d", "checkpoints_dual_3dto2d_new3")
-    legacy_prefix = legacy_prefix.replace("checkpoints_dual_2dto3d", "checkpoints_dual_2dto3d_new3")
+    legacy_prefix = prefix.replace("checkpoints_eyecandies_dual_3dto2d", "checkpoints_eyecandies_dual_3dto2d_new3")
+    legacy_prefix = legacy_prefix.replace("checkpoints_eyecandies_dual_2dto3d", "checkpoints_eyecandies_dual_2dto3d_new3")
     legacy_candidate = f"{legacy_prefix}_{class_name}{suffix}"
     if os.path.isdir(legacy_candidate):
         print(f"[{class_name}] Using legacy checkpoint directory: {legacy_candidate}")
@@ -370,20 +376,24 @@ def process_class(class_name, args, device):
     except FileNotFoundError: return None
     model_real_2d3d.eval(); model_est_2d3d.eval()
 
-    # --- Box Filters Setup (模仿参考代码) ---
-    # w_l, w_u = 3, 5
-    # pad_l, pad_u = 1, 2
-    small_kernel_classes = {"bagel", "cable_gland", "dowel", "foam", "tire"}
+    # --- Box Filters Setup ---
+
+    small_kernel_classes = {
+        "CandyCane", "ChocolateCookie", "ChocolatePraline",
+        "LicoriceSandwich", "Lollipop", "Marshmallow", "PeppermintCandy",
+        "GummyBear", "Confetto"
+    }
 
     if class_name in small_kernel_classes:
         w_l, w_u = 3, 5
         pad_l, pad_u = 1, 2
         print(f"[{class_name}] Using Small Kernels: (3, 5)")
     else:
-        # carrot, cookie, peach, potato, rope 使用大核 (5,7) 进行强平滑
+
         w_l, w_u = 5, 7
         pad_l, pad_u = 2, 3
         print(f"[{class_name}] Using Large Kernels: (5, 7)")
+
     weight_l = torch.ones(1, 1, w_l, w_l, device=device) / (w_l**2)
     weight_u = torch.ones(1, 1, w_u, w_u, device=device) / (w_u**2)
 
@@ -413,29 +423,27 @@ def process_class(class_name, args, device):
             for b in range(rgb.shape[0]):
                 is_anomaly = labels[b].item()
 
-                # --- 1. 计算余弦距离 ---
+
                 dist_real_3d2d = compute_cosine_distance_torch(pred_rgb_from_real[b:b+1], rgb_feats_flat[b:b+1])
                 dist_est_3d2d = compute_cosine_distance_torch(pred_rgb_from_est[b:b+1], rgb_feats_flat[b:b+1])
 
                 dist_real_2d3d = compute_cosine_distance_torch(pred_norm_from_rgb_real[b:b+1], real_norm_flat[b:b+1])
                 dist_est_2d3d = compute_cosine_distance_torch(pred_norm_from_rgb_est[b:b+1], real_norm_flat[b:b+1])
 
-                # --- 2. 融合 real 和 est (real + 0.1 * est) --- Full 使用 0.01est
+
                 map_3d2d = dist_real_3d2d + 0.1 * dist_est_3d2d
                 map_2d3d = dist_real_2d3d + 0.1 * dist_est_2d3d
 
-                # --- 3. Mask 置零逻辑 (模仿参考代码) ---
-                # fg_masks 中前景是 1，背景是 0。所以 fg_masks == 0 对应的就是背景 (需要遮罩的区域)。
-                bg_mask = (fg_masks[b:b+1] == 0) # 维度 (1, 1, 224, 224)
 
+                bg_mask = (fg_masks[b:b+1] == 0)
                 map_3d2d[bg_mask] = 0.
                 map_2d3d[bg_mask] = 0.
 
-                # --- 4. 结合双向结果 ---
+
                 map_comb = map_3d2d * map_2d3d
                 map_comb[bg_mask] = 0.
 
-                # --- 5. Box Filter 模糊 (模仿参考代码的 conv2d 操作) ---
+
                 map_comb = F.conv2d(input=map_comb, padding=pad_l, weight=weight_l)
                 map_comb = F.conv2d(input=map_comb, padding=pad_l, weight=weight_l)
                 map_comb = F.conv2d(input=map_comb, padding=pad_l, weight=weight_l)
@@ -445,25 +453,18 @@ def process_class(class_name, args, device):
                 map_comb = F.conv2d(input=map_comb, padding=pad_u, weight=weight_u)
                 map_comb = F.conv2d(input=map_comb, padding=pad_u, weight=weight_u)
                 map_comb = F.conv2d(input=map_comb, padding=pad_u, weight=weight_u)
-                # --- 5. 减弱后的 Box Filter 模糊 ---
-                # 仅使用 2 次 5x5 模糊
-                # map_comb = F.conv2d(input=map_comb, padding=pad_l, weight=weight_l)
-                # map_comb = F.conv2d(input=map_comb, padding=pad_l, weight=weight_l)
-
-                # # 仅使用 1 次 7x7 模糊
-                # map_comb = F.conv2d(input=map_comb, padding=pad_u, weight=weight_u)
 
                 map_comb_eval = map_comb.squeeze() # (224, 224)
                 gt_eval = gt_masks[b].squeeze().numpy()
 
-                # --- 6. 收集评价指标所需数据 (完全对齐参考代码算法) ---
+
                 gts_list.append(gt_eval)
 
-                # 针对 PRO: (cos_comb / (cos_comb[cos_comb!=0].mean()))
+
                 mean_val_pro = map_comb_eval[map_comb_eval!=0].mean() if map_comb_eval[map_comb_eval!=0].numel() > 0 else torch.tensor(1.0, device=device)
                 preds_list.append((map_comb_eval / mean_val_pro).cpu().detach().numpy())
 
-                # 针对 AUROC:
+
                 image_labels.append(is_anomaly)
                 pixel_labels.extend(gt_eval.flatten())
 
@@ -475,7 +476,7 @@ def process_class(class_name, args, device):
 
                 # WandB Visualization
                 global_idx = batch_idx * args.batch_size + b
-                if wandb.run is not None and (global_idx % 4 == 0):
+                if wandb.run is not None and (global_idx % 40 == 0):
                     fig = generate_visual_row(
                         rgb[b],
                         map_3d2d.squeeze().cpu().numpy(),
@@ -487,19 +488,7 @@ def process_class(class_name, args, device):
                     wandb.log({f"{class_name}_Vis/{names[b]}": wandb.Image(fig)})
                     plt.close(fig)
 
-            # Metric inputs have been copied to CPU. Releasing the feature and
-            # mapper outputs before the next sample prevents transient overlap
-            # between two full DINO feature passes on 24 GB GPUs.
-            del (rgb, real_normal, est_normal, fg_masks, rgb_feats, rgb_feats_flat,
-                 real_norm_feats, real_norm_flat, est_norm_feats,
-                 pred_rgb_from_real, pred_rgb_from_est,
-                 pred_norm_from_rgb_real, pred_norm_from_rgb_est,
-                 dist_real_3d2d, dist_est_3d2d,
-                 dist_real_2d3d, dist_est_2d3d,
-                 map_3d2d, map_2d3d, map_comb, map_comb_eval, bg_mask)
-            torch.cuda.empty_cache()
 
-    # --- 计算 Metrics ---
     try:
         if len(np.unique(image_labels)) < 2: image_auroc = 0.5
         else: image_auroc = roc_auc_score(image_labels, image_preds)
@@ -518,7 +507,7 @@ def process_class(class_name, args, device):
         except Exception as e:
             print(f"Error calculating AUPRO for {class_name}: {e}")
 
-    # 清理显存
+
     del model_real_3d2d, model_est_3d2d, model_real_2d3d, model_est_2d3d, extractor
     del dataloader, dataset
     gc.collect()
@@ -535,7 +524,7 @@ def process_class(class_name, args, device):
     }
 
 # =========================================================================
-# 7. 主流程
+
 # =========================================================================
 def main():
     args = get_args()
@@ -543,16 +532,15 @@ def main():
         raise RuntimeError("CUDA is required for CMDS-AD inference, but it is not available")
     device = "cuda"
 
-    ALL_CLASSES = [
-        "bagel", "cable_gland", "carrot", "cookie", "dowel",
-        "foam", "peach", "potato", "rope", "tire"
+    EYECANDIES_CLASSES = [
+        "CandyCane", "ChocolateCookie", "ChocolatePraline",
+        "GummyBear", "HazelnutTruffle", "LicoriceSandwich",
+        "Lollipop", "Confetto", "Marshmallow", "PeppermintCandy"
     ]
-
-    classes = args.classes or ALL_CLASSES
 
     wandb.init(
         project=args.wandb_project,
-        name="Direct_BoxFilter_Integration",
+        name="Direct_BoxFilter_Integration_Eyecandies",
         config=vars(args),
         mode=args.wandb_mode,
     )
@@ -560,9 +548,10 @@ def main():
     final_results = []
 
     print("=============================================")
-    print("STARTING INFERENCE (Box Filter & Hard Mask)")
+    print("STARTING INFERENCE FOR EYECANDIES")
     print("=============================================")
 
+    classes = args.classes or EYECANDIES_CLASSES
     for cls in classes:
         print(f"\n>>> Processing Class: {cls}")
         metrics = process_class(cls, args, device)
@@ -591,20 +580,20 @@ def main():
     if len(final_results) > 0:
         print("\n\n")
         print("="*105)
-        print(f"{'Class':<15} | {'I-AUROC':<10} | {'P-AUROC':<10} | {'PRO 30%':<10} | {'PRO 10%':<10} | {'PRO 5%':<10} | {'PRO 1%':<10}")
+        print(f"{'Class':<17} | {'I-AUROC':<10} | {'P-AUROC':<10} | {'PRO 30%':<10} | {'PRO 10%':<10} | {'PRO 5%':<10} | {'PRO 1%':<10}")
         print("-" * 105)
 
         sums = {k: 0.0 for k in final_results[0].keys() if k != "class"}
 
         for res in final_results:
-            print(f"{res['class']:<15} | {res['I-AUROC']:.4f}        | {res['P-AUROC']:.4f}        | {res['AUPRO_30']:.4f}        | {res['AUPRO_10']:.4f}        | {res['AUPRO_05']:.4f}        | {res['AUPRO_01']:.4f}")
+            print(f"{res['class']:<17} | {res['I-AUROC']:.4f}     | {res['P-AUROC']:.4f}     | {res['AUPRO_30']:.4f}     | {res['AUPRO_10']:.4f}     | {res['AUPRO_05']:.4f}     | {res['AUPRO_01']:.4f}")
             for k in sums.keys():
                 sums[k] += res[k]
 
         print("-" * 105)
 
         n = len(final_results)
-        print(f"{'MEAN':<15} | {sums['I-AUROC']/n:.4f}        | {sums['P-AUROC']/n:.4f}        | {sums['AUPRO_30']/n:.4f}        | {sums['AUPRO_10']/n:.4f}        | {sums['AUPRO_05']/n:.4f}        | {sums['AUPRO_01']/n:.4f}")
+        print(f"{'MEAN':<17} | {sums['I-AUROC']/n:.4f}     | {sums['P-AUROC']/n:.4f}     | {sums['AUPRO_30']/n:.4f}     | {sums['AUPRO_10']/n:.4f}     | {sums['AUPRO_05']/n:.4f}     | {sums['AUPRO_01']/n:.4f}")
         print("="*105)
 
         wandb.log({

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-# 设置 Open3D 头部渲染模式 (必须在导入 open3d 之前)
+
 os.environ["O3D_HEADLESS_RENDERING"] = "1"
 
 import open3d as o3d
@@ -13,13 +13,10 @@ from tqdm import tqdm
 import sys
 
 # =========================================================================
-#  Part 1: CPU 背景清洗逻辑 (RANSAC + DBSCAN)
+
 # =========================================================================
 
 def get_edges_of_pc(organized_pc):
-    """
-    提取点云边缘的点，用于估计背景平面。
-    """
     H, W, C = organized_pc.shape
 
     top = organized_pc[0:10, :, :].reshape(-1, 3)
@@ -32,9 +29,6 @@ def get_edges_of_pc(organized_pc):
     return unorganized_edges_pc
 
 def get_plane_eq(unorganized_pc, ransac_n_pts=50):
-    """
-    使用 RANSAC 拟合平面方程
-    """
     if unorganized_pc.shape[0] < ransac_n_pts:
         return None, None
 
@@ -43,9 +37,6 @@ def get_plane_eq(unorganized_pc, ransac_n_pts=50):
     return plane_model
 
 def remove_plane_cpu(organized_pc, distance_threshold=0.005):
-    """
-    去除背景平面
-    """
     H, W, C = organized_pc.shape
     flat_pc = organized_pc.reshape(-1, 3)
 
@@ -67,9 +58,6 @@ def remove_plane_cpu(organized_pc, distance_threshold=0.005):
     return flat_pc_clean.reshape(H, W, C)
 
 def connected_components_cleaning_cpu(organized_pc):
-    """
-    使用 DBSCAN 去除离散的噪点
-    """
     H, W, C = organized_pc.shape
     flat_pc = organized_pc.reshape(-1, 3)
 
@@ -99,11 +87,11 @@ def connected_components_cleaning_cpu(organized_pc):
     return flat_pc_clean.reshape(H, W, C)
 
 # =========================================================================
-#  Part 2: 主处理函数
+
 # =========================================================================
 
 def convert_mvtec_tiff_to_normal_o3d_gpu(tiff_path, output_path, radius=0.01, max_nn=30, target_size=(224, 224), device=None):
-    # --- 1. 读取数据 (CPU) ---
+
     try:
         xyz_data = tifffile.imread(tiff_path)
     except Exception as e:
@@ -113,29 +101,29 @@ def convert_mvtec_tiff_to_normal_o3d_gpu(tiff_path, output_path, radius=0.01, ma
     H, W, C = xyz_data.shape
 
     # =========================================================
-    # 步骤 A: 严格的数据清洗 (CPU)
+
     # =========================================================
     xyz_data = np.nan_to_num(xyz_data, nan=0.0)
 
-    # 【逻辑修改】根据路径判断是否为 dowel
-    # MVTec 路径通常包含类别名，例如 .../dowel/train/...
-    # 如果路径中包含 "dowel"，使用严格阈值 0.002
-    # 其他类别使用较宽松阈值 0.005 以彻底去背景
+
+
+
+
     if "dowel" in tiff_path.lower():
         plane_thresh = 0.002
     else:
         plane_thresh = 0.005
 
-    # 去除平面 (RANSAC)
+
     xyz_no_plane = remove_plane_cpu(xyz_data, distance_threshold=plane_thresh)
 
-    # 连通分量去噪 (DBSCAN)
+
     xyz_clean = connected_components_cleaning_cpu(xyz_no_plane)
 
     points_flat = xyz_clean.reshape(-1, 3).astype(np.float32)
 
     # =========================================================
-    # 步骤 B: GPU 法向量估计
+
     # =========================================================
     try:
         pcd_t = o3d.t.geometry.PointCloud(device)
@@ -155,43 +143,43 @@ def convert_mvtec_tiff_to_normal_o3d_gpu(tiff_path, output_path, radius=0.01, ma
     normals_grid = normals_flat.reshape(H, W, 3)
 
     # =========================================================
-    # 步骤 C: 渲染与着色
+
     # =========================================================
 
-    # 1. 法向量取反
+
     normals_grid = -normals_grid
 
-    # 2. 强制背景为纯平 (蓝色 [0,0,1])
+
     mask_zeros = np.all(np.isclose(xyz_clean, 0), axis=2)
     normals_grid[mask_zeros] = [0.0, 0.0, 1.0]
 
-    # 3. 颜色映射 [-1, 1] -> [0, 1]
+
     rgb_normals_float = (normals_grid + 1.0) / 2.0
     rgb_normals_float = np.clip(rgb_normals_float, 0.0, 1.0)
 
-    # 转为 uint8 (此时是 RGB 顺序)
+
     rgb_uint8 = (rgb_normals_float * 255).astype(np.uint8)
 
     # =========================================================
-    # 步骤 D: 填充至正方形 (Pad to Square) - 针对 Rope/Tire
+
     # =========================================================
     H_curr, W_curr = rgb_uint8.shape[:2]
 
     if H_curr != W_curr:
         max_side = max(H_curr, W_curr)
 
-        # 计算填充量
+
         top = (max_side - H_curr) // 2
         bottom = max_side - H_curr - top
         left = (max_side - W_curr) // 2
         right = max_side - W_curr - left
 
-        # 目标背景色 (RGB):
-        # 法向量 [0,0,1] -> 归一化后 [0.5, 0.5, 1.0] -> [127, 127, 255]
-        # 注意：这里 rgb_uint8 还是 RGB 顺序，所以用 (127, 127, 255)
+
+
+
         bg_color_rgb = (127, 127, 255)
 
-        # 使用 OpenCV 填充边界
+
         rgb_uint8 = cv2.copyMakeBorder(
             rgb_uint8,
             top, bottom, left, right,
@@ -201,11 +189,11 @@ def convert_mvtec_tiff_to_normal_o3d_gpu(tiff_path, output_path, radius=0.01, ma
 
     # =========================================================
 
-    # 4. 高质量缩放
+
     if target_size is not None:
         rgb_uint8 = cv2.resize(rgb_uint8, target_size, interpolation=cv2.INTER_CUBIC)
 
-    # 5. 保存 (OpenCV 使用 BGR)
+
     bgr_uint8 = cv2.cvtColor(rgb_uint8, cv2.COLOR_RGB2BGR)
     cv2.imwrite(output_path, bgr_uint8)
 
@@ -221,7 +209,7 @@ def main():
 
     args = parser.parse_args()
 
-    # --- 1. 检查 CUDA ---
+
     if not o3c.cuda.is_available():
         print("错误: 当前 Open3D 环境不支持 CUDA 或未检测到 GPU。")
         sys.exit(1)
@@ -229,14 +217,14 @@ def main():
     device = o3c.Device("CUDA:0")
     print(f"Using Device: {device}")
 
-    # --- 2. 准备路径 ---
+
     if not os.path.exists(args.input_dir):
         print(f"Error: Input directory {args.input_dir} does not exist.")
         sys.exit(1)
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # --- 3. 获取文件列表 ---
+
     files = sorted([f for f in os.listdir(args.input_dir) if f.endswith('.tiff')])
 
     if len(files) == 0:
@@ -246,7 +234,7 @@ def main():
     print(f"Found {len(files)} files. Starting processing...")
     print("Logic: RANSAC -> DBSCAN -> GPU Normal -> Pad to Square -> Resize")
 
-    # --- 4. 批量处理 ---
+
     for f in tqdm(files, desc="Processing TIFFs"):
         input_path = os.path.join(args.input_dir, f)
 

@@ -1,13 +1,13 @@
 import os
 
-# ================= 新增：解决 Intel MKL 多进程冲突 (解决 FATAL ERROR) =================
+
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 # ====================================================================================
 
-# 设置 Open3D 头部渲染模式 (必须在导入 open3d 之前)
+
 os.environ["O3D_HEADLESS_RENDERING"] = "1"
 
 import open3d as o3d
@@ -25,7 +25,7 @@ import sys
 FOCAL_LENGTH = 711.11
 
 # =========================================================================
-#  Part 1: 基础数据读取 (保持不变)
+
 # =========================================================================
 
 def load_and_convert_depth(depth_img, info_depth):
@@ -69,7 +69,7 @@ def depth_to_pointcloud_raw(depth_img, info_depth, pose_txt, focal_length):
     return pcd[:, :3], camera_center
 
 # =========================================================================
-#  Part 2: 核心修复 - 分流处理函数 (保持不变)
+
 # =========================================================================
 
 def process_point_cloud_split_paths(pc_raw):
@@ -110,7 +110,7 @@ def process_point_cloud_split_paths(pc_raw):
     return pc_distorted, pc_physical_clean
 
 # =========================================================================
-#  Part 3: 法向量计算
+
 # =========================================================================
 
 def connected_components_cleaning_cpu(organized_pc):
@@ -139,7 +139,7 @@ def compute_and_save_normal(pc_physical_clean_flat, camera_center, output_path, 
     xyz_clean_3d = connected_components_cleaning_cpu(xyz_clean_3d)
     points_flat_clean = xyz_clean_3d.reshape(-1, 3).astype(np.float32)
 
-    # 彻底移除了腐蚀操作 (cv2.erode)
+
     final_bg_mask = np.all(np.isclose(points_flat_clean, 0), axis=1)
     fg_mask = ~final_bg_mask
 
@@ -187,7 +187,7 @@ def compute_and_save_normal(pc_physical_clean_flat, camera_center, output_path, 
     cv2.imwrite(output_path, cv2.cvtColor(rgb_uint8, cv2.COLOR_RGB2BGR))
 
 # =========================================================================
-#  主调度流程 (根据测试代码修改为完整类别处理)
+
 # =========================================================================
 def make_mvtec_dirs(base_path, category, split, condition):
     paths = {
@@ -226,14 +226,14 @@ def main():
     test_good_dirs = make_mvtec_dirs(args.target_dir, category_dir, 'test', 'good')
     test_bad_dirs = make_mvtec_dirs(args.target_dir, category_dir, 'test', 'bad')
 
-    # === 处理训练集 (遍历全集) ===
-    # 查找所有的 depth 图像
+
+
     train_depth_files = sorted([f for f in os.listdir(category_train_path) if f.endswith('_depth.png')])
     print(f"\n⏳ [1/2] 正在处理 训练集 Train Good (共 {len(train_depth_files)} 张)...")
 
     for i, file_name in enumerate(train_depth_files):
-        prefix_in = file_name.split('_')[0]   # 取出原始的前缀，比如 000
-        prefix_out = str(i).zfill(3)          # 转换为标准 MVTec 命名，比如 000, 001
+        prefix_in = file_name.split('_')[0]
+        prefix_out = str(i).zfill(3)
 
         pc_raw, camera_center = depth_to_pointcloud_raw(
             os.path.join(category_train_path, f'{prefix_in}_depth.png'),
@@ -248,7 +248,7 @@ def main():
         compute_and_save_normal(pc_physical_clean_flat, camera_center, os.path.join(train_good_dirs['normals'], f'{prefix_out}.png'), device)
         copyfile(os.path.join(category_train_path, f'{prefix_in}_image_4.png'), os.path.join(train_good_dirs['rgb'], f'{prefix_out}.png'))
 
-    # === 处理测试集 (遍历全集) ===
+
     category_test_files = sorted([f for f in os.listdir(category_test_path) if f.endswith('_mask.png')])
     print(f"\n⏳ [2/2] 正在处理 测试集 Test (共 {len(category_test_files)} 张)...")
 

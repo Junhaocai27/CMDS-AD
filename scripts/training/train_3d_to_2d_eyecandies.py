@@ -1,3 +1,12 @@
+"""Train the Eyecandies normal-to-RGB dual-stream mapper."""
+
+from pathlib import Path
+import sys
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -19,22 +28,21 @@ import wandb
 import time
 from sklearn.decomposition import PCA
 
-import scipy.ndimage
-
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Dual Stream SFF Training (RGB->Normal) Real Masked, Est Global")
-    parser.add_argument("--class_name", type=str, default="rope", help="Object category")
+    parser = argparse.ArgumentParser(description="Dual Stream SFF Training (Real Masked, Est Global)")
+
+    parser.add_argument("--class_name", type=str, default="CandyCane", help="Object category")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size per stream (use 1 on a 24 GB GPU)")
     parser.add_argument("--max_steps", type=int, default=3000, help="Fixed number of training steps")
     parser.add_argument("--shots", type=int, default=10, help="Number of real images to select (e.g., 5-shot)")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
-    parser.add_argument("--rgb_root", type=str, default="./data/derived/output_generation_full")
-    parser.add_argument("--real_normal_root", type=str, default="./data/derived/normal_output_train_new_full/real_normals")
-    parser.add_argument("--est_normal_root", type=str, default="./data/derived/normal_output_train_new_full/estimated_normals")
-    parser.add_argument("--mask_root", type=str, default="./data/derived/mvtec_3d_masks_generated")
+    parser.add_argument("--rgb_root", type=str, default="./data/derived/output_generation_eyecandies")
+    parser.add_argument("--real_normal_root", type=str, default="./data/derived/normal_output_train_eyecandies/real_normals")
+    parser.add_argument("--est_normal_root", type=str, default="./data/derived/normal_output_train_eyecandies/estimated_normals")
+    parser.add_argument("--mask_root", type=str, default="./data/derived/eyecandies_masks_generated")
     parser.add_argument("--checkpoint_root", type=str, default="./checkpoints")
     parser.add_argument("--device", choices=["cuda"], default="cuda")
     parser.add_argument("--num_workers", type=int, default=0)
@@ -44,35 +52,36 @@ def get_args():
 args = get_args()
 console = Console()
 
+
 ROOT_RGB = args.rgb_root
 ROOT_REAL = args.real_normal_root
 ROOT_EST = args.est_normal_root
 ROOT_MASK = args.mask_root
+# =========================================================================
 
 CONFIG = {
     "class_name": args.class_name,
-    "exp_name": f"DualStream_2Dto3D_{args.class_name}_{args.shots}shot_RealMasked_EstGlobal",
+    "exp_name": f"DualStream_3Dto2D_{args.class_name}_{args.shots}shot_RealMasked_EstGlobal",
     "rgb_dir": os.path.join(ROOT_RGB, args.class_name),
     "real_normal_dir": os.path.join(ROOT_REAL, args.class_name, "train/good"),
     "est_normal_dir": os.path.join(ROOT_EST, args.class_name, "train/good/normals_vis"),
     "mask_dir": os.path.join(ROOT_MASK, args.class_name, "train/good"),
-    "ckpt_dir": os.path.join(args.checkpoint_root, f"checkpoints_dual_2dto3d_{args.class_name}_{args.shots}shot"),
+
+    "ckpt_dir": os.path.join(args.checkpoint_root, f"checkpoints_eyecandies_dual_3dto2d_{args.class_name}_{args.shots}shot"),
     "batch_size": args.batch_size,
     "max_steps": args.max_steps,
     "shots": args.shots,
     "lr": args.lr,
     "target_layers": [4, 7, 11],
-    "wandb_project": "CFM_DualStream_Fixed",
+    "wandb_project": "CFM_DualStream_Eyecandies",
     "wandb_mode": args.wandb_mode,
     "num_workers": args.num_workers,
 }
 
-console.print(f"[bold yellow]Starting Training (2D->3D) for Class:[/bold yellow] [green]{CONFIG['class_name']}[/green] | [cyan]{CONFIG['shots']}-shot[/cyan]")
+console.print(f"[bold yellow]Starting Training (3D->2D) for Class:[/bold yellow] [green]{CONFIG['class_name']}[/green] | [cyan]{CONFIG['shots']}-shot[/cyan]")
 
 # =========================================================================
-# 2. Dataset (Modified: With Mask & Few-Shot Logic)
-#    Input: RGB (Normalized)
-#    Target: Normal (Real / Est)
+# 2. Dataset
 # =========================================================================
 class SingleStreamDataset(Dataset):
     def __init__(self, rgb_dir, real_dir, est_dir, mask_dir, mode='real', img_size=224, shots=5):
@@ -110,13 +119,11 @@ class SingleStreamDataset(Dataset):
                     if os.path.exists(os.path.join(rgb_dir, fname_gen)):
                         self.file_list.append(fname_gen)
 
-        # Input (RGB): Normalized
         self.tf_rgb = transforms.Compose([
             transforms.Resize((img_size, img_size)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
-        # Target (Normal) & Mask: Raw [0, 1]
         self.tf_norm = transforms.Compose([
             transforms.Resize((img_size, img_size)),
             transforms.ToTensor()
@@ -131,12 +138,12 @@ class SingleStreamDataset(Dataset):
         name_stem = os.path.splitext(fname)[0]
         base_stem = name_stem.split('_seed')[0]
 
-        # 1. Load RGB (Input)
+        # 1. Load RGB
         rgb_path = os.path.join(self.rgb_root, fname)
         rgb_pil = Image.open(rgb_path).convert('RGB')
         rgb = self.tf_rgb(rgb_pil)
 
-        # 2. Load Mask (Only really used for REAL mode, return dummy for EST)
+        # 2. Load Mask (Only really used for REAL mode, but we return dummy for EST to avoid DataLoader crash)
         mask = torch.ones((1, self.img_size, self.img_size))
         if self.mode == 'real':
             mask_path = os.path.join(self.mask_dir, f"{base_stem}.png")
@@ -144,7 +151,7 @@ class SingleStreamDataset(Dataset):
                 mask_pil = Image.open(mask_path).convert('L')
                 mask = transforms.ToTensor()(transforms.Resize((self.img_size, self.img_size), interpolation=Image.NEAREST)(mask_pil))
 
-        # 3. Pre-load Normals (Targets)
+        # 3. Pre-load Normals
         real_gt_path = os.path.join(self.real_dir, f"{base_stem}.png")
         has_real_normal = os.path.exists(real_gt_path)
         real_normal_pil = Image.open(real_gt_path).convert('RGB') if has_real_normal else None
@@ -153,27 +160,16 @@ class SingleStreamDataset(Dataset):
         has_est_normal = os.path.exists(est_path)
         est_normal_pil = Image.open(est_path).convert('RGB') if has_est_normal else None
 
-        target_tensor = None
-
-        # --- A. Real Stream: Input=RGB, Target=Real Normal ---
+        input_tensor = None
         if self.mode == 'real':
-            if has_real_normal:
-                target_tensor = self.tf_norm(real_normal_pil)
-            else:
-                target_tensor = torch.zeros(3, self.img_size, self.img_size)
-
-        # --- B. Est/All Stream: Input=RGB, Target=Est Normal ---
+            input_tensor = self.tf_norm(real_normal_pil) if has_real_normal else torch.zeros_like(rgb)
         else:
-            if has_est_normal:
-                target_tensor = self.tf_norm(est_normal_pil)
-            else:
-                target_tensor = torch.zeros(3, self.img_size, self.img_size)
+            input_tensor = self.tf_norm(est_normal_pil) if has_est_normal else torch.zeros_like(rgb)
 
-        # 返回: (input=RGB, target=Normal, mask)
-        return rgb, target_tensor, mask
+        return input_tensor, rgb, mask
 
 # =========================================================================
-# 3. Models (Unchanged)
+# 3. Models
 # =========================================================================
 class TripleLayerExtractor(nn.Module):
     def __init__(self, device, target_layers=[4, 7, 11], img_size=224):
@@ -276,21 +272,23 @@ def decoupled_multiscale_loss(pred_flat, target_flat, mask=None):
     total_loss = 0
     weights = [1.2, 1.0, 0.8]
     names = ["L4_HF", "L7_MF", "L11_LF"]
-
     lambda_l2 = 0.0
 
     for i in range(3):
+        # 1. Cosine Loss
         p_norm = F.normalize(pred_chunks[i], p=2, dim=-1)
         t_norm = F.normalize(target_chunks[i], p=2, dim=-1)
         cos_sim = F.cosine_similarity(p_norm, t_norm, dim=-1)
         loss_cos = 1 - cos_sim # (B, N)
 
+        # 2. MSE Loss
         mse = (pred_chunks[i] - target_chunks[i]) ** 2
         loss_l2 = mse.mean(dim=-1) # (B, N)
 
+        # 3. Combine
         combined_pixel_loss = loss_cos + lambda_l2 * loss_l2
 
-        # Mask Applied condition
+        # 4. Mask Applied condition
         if mask is not None:
             mask_flat = mask.flatten(1) # (B, N)
             valid_pixels = mask_flat.sum(dim=1) + 1e-6 # (B,)
@@ -306,7 +304,7 @@ def decoupled_multiscale_loss(pred_flat, target_flat, mask=None):
     return total_loss, losses
 
 # =========================================================================
-# 5. Visuals (Modified: Included Mask)
+# 5. Visuals
 # =========================================================================
 def denorm_rgb(tensor):
     m = torch.tensor([0.485, 0.456, 0.406]).view(3,1,1).to(tensor.device)
@@ -331,13 +329,11 @@ def compute_pca_vis(feat_BNC):
     return pca_f.reshape(B, 224, 224, 3)
 
 def log_dual_visuals(
-        real_input_rgb, real_target_norm, real_mask, real_target_feat, real_pred_feat,
-        est_input_rgb, est_target_norm, est_mask, est_target_feat, est_pred_feat,
+        real_input_norm, real_target_rgb, real_mask, real_target_feat, real_pred_feat,
+        est_input_norm, est_target_rgb, est_mask, est_target_feat, est_pred_feat,
         step
     ):
-
     idx = 0
-
     def norm_f(x): return F.normalize(x, p=2, dim=-1)
 
     feats = torch.cat([
@@ -348,14 +344,13 @@ def log_dual_visuals(
     ], dim=0)
 
     pca_imgs = compute_pca_vis(feats)
-
     fig, axes = plt.subplots(3, 4, figsize=(16, 12))
 
-    # --- Row 1: Real Stream (Input: RGB, Target: Real Normal) ---
-    axes[0,0].imshow(denorm_rgb(real_input_rgb[idx]))
-    axes[0,0].set_title("Input: RGB")
-    axes[0,1].imshow(simple_permute(real_target_norm[idx]))
-    axes[0,1].set_title("Target: Real Normal")
+    # --- Row 1: Real Stream ---
+    axes[0,0].imshow(simple_permute(real_input_norm[idx]))
+    axes[0,0].set_title(f"Input: Real Normal")
+    axes[0,1].imshow(denorm_rgb(real_target_rgb[idx]))
+    axes[0,1].set_title("Target: Real RGB")
     if real_mask is not None:
         axes[0,2].imshow(real_mask[idx].squeeze().cpu().numpy(), cmap='gray')
         axes[0,2].set_title("Mask (Real)")
@@ -370,12 +365,12 @@ def log_dual_visuals(
     axes[1,1].set_title("Pred Real Model")
 
     # --- Extra: Est Stream Images ---
-    axes[1,2].imshow(denorm_rgb(est_input_rgb[idx]))
-    axes[1,2].set_title("Input: RGB")
-    axes[1,3].imshow(simple_permute(est_target_norm[idx]))
-    axes[1,3].set_title("Target: Est Normal")
+    axes[1,2].imshow(simple_permute(est_input_norm[idx]))
+    axes[1,2].set_title(f"Input: Est Normal")
+    axes[1,3].imshow(denorm_rgb(est_target_rgb[idx]))
+    axes[1,3].set_title("Target: Est RGB")
 
-    # --- Row 3: PCA Est ---
+    # --- Row 3: PCA Est (Mix) ---
     axes[2,0].imshow(pca_imgs[2])
     axes[2,0].set_title("Target Est Feat")
     axes[2,1].imshow(pca_imgs[3])
@@ -395,7 +390,7 @@ def log_dual_visuals(
     plt.close(fig)
 
 # =========================================================================
-# 6. Training Loop (Fixed Steps)
+# 6. Training Loop
 # =========================================================================
 def cycle_loader(dl):
     while True:
@@ -431,9 +426,7 @@ def run_training():
     iter_est = iter(cycle_loader(dl_est_all))
 
     extractor = TripleLayerExtractor(device, target_layers=CONFIG["target_layers"])
-    # model_real: RGB -> Real Normal features
     model_real = HierarchicalGatedMapper(embed_dim=768).to(device)
-    # model_est: RGB -> Est Normal features
     model_est = HierarchicalGatedMapper(embed_dim=768).to(device)
 
     optimizer = torch.optim.AdamW([
@@ -455,7 +448,7 @@ def run_training():
     )
 
     with progress:
-        task = progress.add_task(f"[green]Training {CONFIG['class_name']} (2D->3D)...", total=CONFIG["max_steps"], info="Init")
+        task = progress.add_task(f"[green]Training 3Dto2D {CONFIG['class_name']}...", total=CONFIG["max_steps"], info="Init")
 
         model_real.train()
         model_est.train()
@@ -466,38 +459,38 @@ def run_training():
         for step in range(1, CONFIG["max_steps"] + 1):
 
             # --- Load Data ---
-            input_rgb_real, target_norm_real, mask_real = next(iter_real)
-            input_rgb_est, target_norm_est, _ = next(iter_est) # 丢弃 est 的 dummy mask
+            input_norm_real, target_rgb_real, mask_real = next(iter_real)
 
-            input_rgb_real = input_rgb_real.to(device)
-            target_norm_real = target_norm_real.to(device)
+            input_norm_est, target_rgb_est, _ = next(iter_est)
+
+            input_norm_real = input_norm_real.to(device)
+            target_rgb_real = target_rgb_real.to(device)
             mask_real = mask_real.to(device)
 
-            input_rgb_est = input_rgb_est.to(device)
-            target_norm_est = target_norm_est.to(device)
+            input_norm_est = input_norm_est.to(device)
+            target_rgb_est = target_rgb_est.to(device)
 
-            input_rgb_real_noisy = add_input_noise(input_rgb_real)
-            input_rgb_est_noisy = add_input_noise(input_rgb_est)
+            input_norm_real_noisy = add_input_noise(input_norm_real)
+            input_norm_est_noisy = add_input_noise(input_norm_est)
 
             with torch.no_grad():
-                # Extract Target (Normal) features
-                real_gt_feats = extractor(target_norm_real)
+                real_gt_feats = extractor(target_rgb_real)
                 target_real_flat = torch.cat(real_gt_feats, dim=1).flatten(2).transpose(1, 2)
 
-                est_gt_feats = extractor(target_norm_est)
+                est_gt_feats = extractor(target_rgb_est)
                 target_est_flat = torch.cat(est_gt_feats, dim=1).flatten(2).transpose(1, 2)
 
-                # Extract Input (RGB) features
-                rgb_real_feats = extractor(input_rgb_real_noisy)
-                rgb_est_feats = extractor(input_rgb_est_noisy)
+                norm_real_feats = extractor(input_norm_real_noisy)
+                norm_est_feats = extractor(input_norm_est_noisy)
 
             # --- Forward ---
-            # 1. Real Stream (使用 Mask)
-            pred_real, _ = model_real(rgb_real_feats)
+
+
+            pred_real, _ = model_real(norm_real_feats)
             loss_real, dict_real = decoupled_multiscale_loss(pred_real, target_real_flat, mask=mask_real)
 
-            # 2. Est Stream (传入 None，全局无 Mask)
-            pred_est, _ = model_est(rgb_est_feats)
+
+            pred_est, _ = model_est(norm_est_feats)
             loss_est, dict_est = decoupled_multiscale_loss(pred_est, target_est_flat, mask=None)
 
             total_loss = loss_real + loss_est
@@ -521,8 +514,8 @@ def run_training():
 
             if step % 200 == 0:
                 log_dual_visuals(
-                    input_rgb_real, target_norm_real, mask_real, target_real_flat, pred_real,
-                    input_rgb_est, target_norm_est, None, target_est_flat, pred_est, # est_mask传入None
+                    input_norm_real, target_rgb_real, mask_real, target_real_flat, pred_real,
+                    input_norm_est, target_rgb_est, None, target_est_flat, pred_est,
                     step
                 )
 
@@ -533,17 +526,15 @@ def run_training():
                 accum_loss_real = 0
                 accum_loss_est = 0
 
-            # 按步数定期保存
             if step % 1000 == 0:
-                torch.save(model_real.state_dict(), os.path.join(CONFIG["ckpt_dir"], f"model_real_2d23d_step{step}.pth"))
-                torch.save(model_est.state_dict(), os.path.join(CONFIG["ckpt_dir"], f"model_est_2d23d_step{step}.pth"))
+                torch.save(model_real.state_dict(), os.path.join(CONFIG["ckpt_dir"], f"model_real_3d22d_step{step}.pth"))
+                torch.save(model_est.state_dict(), os.path.join(CONFIG["ckpt_dir"], f"model_est_3d22d_step{step}.pth"))
 
-    # 最终保存
-    torch.save(model_real.state_dict(), os.path.join(CONFIG["ckpt_dir"], "model_real_2d23d_final.pth"))
-    torch.save(model_est.state_dict(), os.path.join(CONFIG["ckpt_dir"], "model_est_2d23d_final.pth"))
+    torch.save(model_real.state_dict(), os.path.join(CONFIG["ckpt_dir"], "model_real_3d22d_final.pth"))
+    torch.save(model_est.state_dict(), os.path.join(CONFIG["ckpt_dir"], "model_est_3d22d_final.pth"))
 
     wandb.finish()
-    console.print(f"[bold green]Training (2D->3D) Completed![/bold green]")
+    console.print(f"[bold green]Training Completed![/bold green]")
 
 if __name__ == "__main__":
     run_training()
