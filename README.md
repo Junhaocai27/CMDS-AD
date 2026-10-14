@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2606.20300"><img src="https://img.shields.io/badge/ARXIV-PAPER?style=for-the-badge&labelColor=555555&color=b31b1b&logo=arxiv&logoColor=white" alt="Paper"></a>
+  <a href="https://link.springer.com/chapter/10.1007/978-3-032-37016-7_23"><img src="https://img.shields.io/badge/ECCV_2026-PROCEEDINGS?style=for-the-badge&labelColor=555555&color=0f5b78&logo=springer&logoColor=white" alt="ECCV 2026 proceedings"></a>
   <a href="https://cmds-ad.github.io/"><img src="https://img.shields.io/badge/PROJECT-PAGE?style=for-the-badge&labelColor=555555&color=0077b6&logo=googlechrome&logoColor=white" alt="Project page"></a>
   <a href="https://drive.google.com/drive/folders/1iY8wpAr5hy58NobtVsczsUSJSqPGbU1f?usp=sharing"><img src="https://img.shields.io/badge/SUBMISSION-CHECKPOINTS?style=for-the-badge&labelColor=555555&color=2e7d32&logo=googledrive&logoColor=white" alt="Submission checkpoints"></a>
   <a href="https://drive.google.com/drive/folders/1frxWmADRgxv-W9CVDWJdnHYZRG_5FdNZ?usp=sharing"><img src="https://img.shields.io/badge/RETRAINED-CHECKPOINTS?style=for-the-badge&labelColor=555555&color=6a1b9a&logo=googledrive&logoColor=white" alt="Retrained checkpoints"></a>
@@ -653,10 +654,15 @@ available. CUDA normal maps can differ slightly across GPU models.
 ## 📚 Citation
 
 ```bibtex
-@article{cmdsad2026,
-  title   = {CMDS-AD: Cross-Modal Dual-Stream Decoupling for Few-Shot Anomaly Detection},
-  journal = {arXiv preprint arXiv:2606.20300},
-  year    = {2026}
+@inproceedings{cai2026cmdsad,
+  author    = {Cai, Junhao and Chen, Junyu and Zeng, Deyu and Pang, Junhao and Liang, Qiwei and Zhong, Xiaopin and Wu, Zongze},
+  title     = {CMDS-AD: Cross-Modal Dual-Stream Decoupling for Few-Shot Anomaly Detection},
+  booktitle = {Computer Vision -- ECCV 2026},
+  pages     = {431--448},
+  year      = {2026},
+  publisher = {Springer Nature Switzerland},
+  doi       = {10.1007/978-3-032-37016-7_23},
+  url       = {https://link.springer.com/chapter/10.1007/978-3-032-37016-7_23}
 }
 ```
 
