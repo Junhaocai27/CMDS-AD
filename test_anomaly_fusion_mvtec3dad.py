@@ -487,6 +487,18 @@ def process_class(class_name, args, device):
                     wandb.log({f"{class_name}_Vis/{names[b]}": wandb.Image(fig)})
                     plt.close(fig)
 
+            # Metric inputs have been copied to CPU. Releasing the feature and
+            # mapper outputs before the next sample prevents transient overlap
+            # between two full DINO feature passes on 24 GB GPUs.
+            del (rgb, real_normal, est_normal, fg_masks, rgb_feats, rgb_feats_flat,
+                 real_norm_feats, real_norm_flat, est_norm_feats,
+                 pred_rgb_from_real, pred_rgb_from_est,
+                 pred_norm_from_rgb_real, pred_norm_from_rgb_est,
+                 dist_real_3d2d, dist_est_3d2d,
+                 dist_real_2d3d, dist_est_2d3d,
+                 map_3d2d, map_2d3d, map_comb, map_comb_eval, bg_mask)
+            torch.cuda.empty_cache()
+
     # --- 计算 Metrics ---
     try:
         if len(np.unique(image_labels)) < 2: image_auroc = 0.5

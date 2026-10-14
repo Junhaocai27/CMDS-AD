@@ -94,7 +94,8 @@ def run_worker(gpu_id: int, tasks: queue.Queue, args: argparse.Namespace, classe
         try:
             validate_shot(args, classes, shots)
             log_path = args.work_root / "logs" / "inference" / args.dataset / f"{shots}shot.log"
-            if log_path.is_file() and not args.force:
+            complete_path = log_path.with_suffix(".complete")
+            if complete_path.is_file() and not args.force:
                 print(f"[skip] {label}: {log_path}")
                 continue
             command = build_command(args, classes, shots)
@@ -103,6 +104,7 @@ def run_worker(gpu_id: int, tasks: queue.Queue, args: argparse.Namespace, classe
             if args.dry_run:
                 continue
             log_path.parent.mkdir(parents=True, exist_ok=True)
+            complete_path.unlink(missing_ok=True)
             environment = os.environ.copy()
             environment["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
             with log_path.open("w", encoding="utf-8") as log_file:
@@ -114,6 +116,7 @@ def run_worker(gpu_id: int, tasks: queue.Queue, args: argparse.Namespace, classe
                     failures.append((label, completed.returncode))
                 print(f"[failed] GPU {gpu_id}: {label}; see {log_path}")
             else:
+                complete_path.write_text("complete\n", encoding="utf-8")
                 print(f"[done] GPU {gpu_id}: {label}")
         except Exception as error:
             with lock:

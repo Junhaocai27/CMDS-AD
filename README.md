@@ -27,6 +27,7 @@ foreground-mask generation, dual-direction training, and evaluation pipeline.
 - **Jul 31, 2026** · We released the complete source code and trained weights.
 - **Aug 4, 2026** · We released the pretrained checkpoints on Hugging Face and Google Drive for reproducibility.
 - **Aug 18, 2026** · We released the independently retrained RTX 4090 checkpoints and verified that their performance is comparable to the RTX 5090 submission weights on both MVTec 3D-AD and Eyecandies.
+- **Oct 14, 2026** · We completed a strict few-shot reproduction in which each LoRA is trained from only the corresponding 1/2/4 normal support images; results remain comparable to the prior reproduction.
 
 ## 🚀 Quick start
 
@@ -120,6 +121,33 @@ Because the training scripts do not force a fully deterministic
 CUDA/random-number configuration, these values measure practical
 cross-hardware reproduction rather than an exact hardware-isolation
 experiment.
+
+### 🧪 Strict few-shot LoRA validation
+
+We additionally validate a stricter support-only protocol. For each category
+and shot setting, LoRA training uses only the selected 1/2/4 normal support
+RGB images with lightweight image augmentation. i2i generation uses the same
+unaugmented support images; real normals, estimated normals, and foreground
+masks follow the standard downstream pipeline.
+
+The table compares the prior RTX 4090 reproduction with this strict protocol.
+All values are percentages in the order I-AUROC / P-AUROC / AUPRO@30%; changes
+are signed percentage points (`strict - prior`).
+
+| Dataset | Shots | Prior 4090 reproduction | Strict support-only LoRA | Change |
+|---|---:|---:|---:|---:|
+| MVTec&nbsp;3D&#8209;AD | 1 | 79.58 / 98.31 / 94.15 | 79.92 / 98.32 / 94.18 | +0.34 / +0.01 / +0.03 |
+| MVTec&nbsp;3D&#8209;AD | 2 | 81.84 / 98.43 / 94.55 | 82.52 / 98.42 / 94.53 | +0.68 / -0.01 / -0.02 |
+| MVTec&nbsp;3D&#8209;AD | 4 | 87.38 / 98.89 / 95.78 | 87.45 / 98.88 / 95.80 | +0.07 / -0.01 / +0.02 |
+| Eyecandies | 1 | 76.78 / 96.45 / 85.14 | 77.73 / 96.56 / 85.47 | +0.95 / +0.11 / +0.33 |
+| Eyecandies | 2 | 79.94 / 96.75 / 86.36 | 80.01 / 96.76 / 86.26 | +0.07 / +0.01 / -0.10 |
+| Eyecandies | 4 | 84.27 / 97.32 / 87.47 | 83.49 / 97.31 / 87.43 | -0.78 / -0.01 / -0.04 |
+
+Across all six settings, pixel-level metrics remain effectively unchanged:
+P-AUROC differs by at most 0.11 points and AUPRO@30% by at most 0.33 points.
+I-AUROC ranges from -0.78 to +0.95 points in this single-seed validation,
+which supports practical comparability while not estimating run-to-run
+stochastic variance.
 
 For released-checkpoint evaluation, skip LoRA training, i2i generation, and
 CMDS-AD training. Prepare the dataset, generate the test normal maps and
