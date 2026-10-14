@@ -5,6 +5,7 @@
   <a href="https://cmds-ad.github.io/"><img src="https://img.shields.io/badge/PROJECT-PAGE?style=for-the-badge&labelColor=555555&color=0077b6&logo=googlechrome&logoColor=white" alt="Project page"></a>
   <a href="https://drive.google.com/drive/folders/1iY8wpAr5hy58NobtVsczsUSJSqPGbU1f?usp=sharing"><img src="https://img.shields.io/badge/SUBMISSION-CHECKPOINTS?style=for-the-badge&labelColor=555555&color=2e7d32&logo=googledrive&logoColor=white" alt="Submission checkpoints"></a>
   <a href="https://drive.google.com/drive/folders/1frxWmADRgxv-W9CVDWJdnHYZRG_5FdNZ?usp=sharing"><img src="https://img.shields.io/badge/RETRAINED-CHECKPOINTS?style=for-the-badge&labelColor=555555&color=6a1b9a&logo=googledrive&logoColor=white" alt="Retrained checkpoints"></a>
+  <a href="https://drive.google.com/file/d/1GsrC20h8-WmVkXKRQKi0RRQ-uIsXQ8U6/view?usp=drive_link"><img src="https://img.shields.io/badge/STRICT_FEW--SHOT-FINAL_WEIGHTS?style=for-the-badge&labelColor=555555&color=00796b&logo=googledrive&logoColor=white" alt="Strict few-shot final weights"></a>
   <a href="https://drive.google.com/drive/folders/1mMaKN-oPRo2KqjjuxsdcwDdq2cvnJ5fk?usp=drive_link"><img src="https://img.shields.io/badge/LORA-WEIGHTS?style=for-the-badge&labelColor=555555&color=f57c00&logo=googledrive&logoColor=white" alt="LoRA weights"></a>
   <a href="https://huggingface.co/Junhaocai27/CMDS-AD"><img src="https://img.shields.io/badge/HUGGINGFACE-WEIGHTS?style=for-the-badge&labelColor=555555&color=ffcc00&logo=huggingface&logoColor=white" alt="HuggingFace weights"></a>
 </p>
@@ -145,6 +146,10 @@ and shot setting, LoRA training uses only the selected 1/2/4 normal support
 RGB images with lightweight image augmentation. i2i generation uses the same
 unaugmented support images; real normals, estimated normals, and foreground
 masks follow the standard downstream pipeline.
+
+The complete strict-protocol final-weight archive, including the support-only
+LoRA weights and final CMDS-AD checkpoints for both datasets and all 1/2/4-shot
+settings, is available from the **STRICT FEW-SHOT FINAL WEIGHTS** badge above.
 
 The table compares the prior RTX 4090 reproduction with this strict protocol.
 All values are percentages in the order I-AUROC / P-AUROC / AUPRO@30%; changes
